@@ -1,0 +1,74 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "nvcal-backend",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-05-17",
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+
+	"d1_databases": [
+		{
+			"binding": "DB", 
+			"database_name": "nvcal-db",
+			"database_id": "local-dev-placeholder"
+
+		}
+	],
+
+	"queues": {
+    // Allows your Hono API to push messages to the sync queue via env.SYNC_QUEUE
+    "producers": [
+      {
+        "binding": "SYNC_QUEUE",
+        "queue": "nvcal-sync-queue"
+      }
+    ],
+    // Triggers the background worker function inside src/index.ts when messages arrive
+    "consumers": [
+      {
+        "queue": "nvcal-sync-queue",
+        "max_batch_size": 10,      // Process up to 10 sync jobs together to save CPU time
+        "max_batch_timeout": 5,    // Wait up to 5 seconds to fill the batch before executing
+        "max_retries": 3           // Automatically retry up to 3 times if third-party APIs fail
+      }
+    ]
+  }
+
+	/**
+	 * Smart Placement
+	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+	 */
+	// "placement": {  "mode": "smart" }
+	/**
+	 * Bindings
+	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+	 * databases, object storage, AI inference, real-time communication and more.
+	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+	 */
+	/**
+	 * Environment Variables
+	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+	 * Note: Use secrets to store sensitive data.
+	 * https://developers.cloudflare.com/workers/configuration/secrets/
+	 */
+	// "vars": {  "MY_VARIABLE": "production_value" }
+	/**
+	 * Static Assets
+	 * https://developers.cloudflare.com/workers/static-assets/binding/
+	 */
+	// "assets": {  "directory": "./public/",  "binding": "ASSETS" }
+	/**
+	 * Service Bindings (communicate between multiple Workers)
+	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
+	 */
+	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+}

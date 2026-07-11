@@ -1,0 +1,27 @@
+{
+  "name": "nvcal-backend",
+  "version": "0.0.0",
+	"type":"module",
+  "private": true,
+  "scripts": {
+		"build-template": "node scripts/compile-template.js",
+		"dev": "npm run build-template && node scripts/dev.js",
+    "deploy": "wrangler deploy",
+    "start": "wrangler dev",
+    "test": "vitest",
+    "cf-typegen": "wrangler types",
+    "db:reset": "wrangler d1 execute nvcal-db --local --file=./schema.sql -y && wrangler d1 execute nvcal-db --local --file=./seed.sql -y"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.16.13",
+    "@types/node": "^25.8.0",
+    "typescript": "^5.5.2",
+    "vitest": "^4.1.8",
+    "wrangler": "^4.92.0"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.8.0",
+    "hono": "^4.12.23",
+    "zod": "^4.4.3"
+  }
+}
