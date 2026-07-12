@@ -25,7 +25,7 @@ export function App({ initialData }: AppProps) {
         </aside>
 
         <main class="main-content">
-          <Topbar currentDate={currentDate} />
+          <Topbar currentDate={currentDate} loggedIn={initialData.authenticated} />
           <MainWeek date={currentDate} setDate={setCurrentDate} events={events} loading={loading} mutations={mutations} />
         </main>
       </div>

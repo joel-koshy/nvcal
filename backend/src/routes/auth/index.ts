@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { sign } from 'hono/jwt';
-import { setCookie } from 'hono/cookie';
+import { sign, verify } from 'hono/jwt';
+import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { hashPassword, verifyPassword } from '../../util/crypto';
-import type { Bindings } from '../../types';
+import type { Bindings, Variables, JwtPayload } from '../../types';
 import googleAuth from './google';
 
 const authRouter = new Hono<{ Bindings: Bindings }>();
@@ -52,7 +52,7 @@ authRouter.post("/signup", async (c) => {
 	setCookie(c, 'nvcal_session', token, {
 		httpOnly: true,
 		secure: true,
-		sameSite: 'Strict',
+		sameSite: 'Lax',
 		maxAge: maxAge,
 		path: '/'
 	})
@@ -98,7 +98,7 @@ authRouter.post("/login", async (c) => {
 	setCookie(c, 'nvcal_session', token, {
 		httpOnly: true,
 		secure: true,
-		sameSite: 'Strict',
+		sameSite: 'Lax',
 		maxAge: maxAge,
 		path: '/'
 	})
@@ -107,6 +107,17 @@ authRouter.post("/login", async (c) => {
 	return c.json({ success: true, user_id: user.id }, 200);
 });
 
+
+
+authRouter.post('/logout', (c) => {
+	deleteCookie(c, 'nvcal_session', {
+		path: '/',
+		secure: true,
+		httpOnly: true,
+		sameSite: 'Lax',
+	});
+	return c.json({ success: true }, 200);
+});
 
 export default authRouter;
 

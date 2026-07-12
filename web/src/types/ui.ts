@@ -10,6 +10,12 @@ export interface DraftEvent {
   date: Date;
 }
 
-export interface NvCalState{
-  events: Event[]; 
+export interface UserInfo {
+  id: string;
+}
+
+export interface NvCalState {
+  events: Event[];
+  authenticated: boolean;
+  user: UserInfo | null;
 }

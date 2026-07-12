@@ -17,7 +17,8 @@ googleAuth.get('/login', (c) => {
 		prompt: 'consent',       // refresh token
 		scope: [
 			'https://www.googleapis.com/auth/userinfo.email',
-			'https://www.googleapis.com/auth/calendar'
+			'https://www.googleapis.com/auth/calendar.events',
+			'https://www.googleapis.com/auth/calendar.calendarlist.readonly'
 		].join(' '),
 	}
 	const qs = new URLSearchParams(options).toString();
@@ -79,29 +80,30 @@ googleAuth.get('/callback', async (c) => {
 	}
 
 	// Save Token
-	const expiresAt = Math.floor(Date.now() / 1000) + tokens.expires_in;
+	const googleTokenExpiresAt = Math.floor(Date.now() / 1000) + tokens.expires_in;
 	await c.env.DB.prepare(
 		`
 		INSERT INTO oauth_connections (user_id, provider, provider_account_id, access_token, refresh_token, expires_at)
-		VALUES (?, 'google', ?, ?, ?, ?, ?)
+		VALUES (?, 'google', ?, ?, ?, ?)
 		ON CONFLICT (user_id, provider) DO UPDATE SET
 		access_token = excluded.access_token,
-		expires_at = excluded.expires_at
+		expires_at = excluded.expires_at,
 		refresh_token = COALESCE(excluded.refresh_token, oauth_connections.refresh_token)
 		`
-	).bind(userId, googleUser.id, tokens.access_token, tokens.refresh_token || null, tokens.expires_in)
+	).bind(userId, googleUser.id, tokens.access_token, tokens.refresh_token || null, googleTokenExpiresAt)
 		.run();
 
-	const maxAge = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60); // 7 Days duration
+	const maxAge = (7 * 24 * 60 * 60)
+	const expAt = Math.floor(Date.now() / 1000) + maxAge; // 7 Days duration
 	const payload = {
 		sub: userId,
-		exp: expiresAt,
+		exp: expAt,
 	}
 	const token = await sign(payload, c.env.JWT_SECRET);
 	setCookie(c, 'nvcal_session', token, {
 		httpOnly: true,
 		secure: true,
-		sameSite: 'Strict',
+		sameSite: 'Lax',
 		maxAge: maxAge,
 		path: '/'
 	})

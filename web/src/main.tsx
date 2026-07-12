@@ -9,7 +9,7 @@ import { MOCK_EVENTS } from './mock/events.ts';
 const stateNode = document.getElementById('initial-state');
 const initialState: NvCalState = stateNode
   ? JSON.parse(stateNode.textContent || '{}')
-  : { events: MOCK_EVENTS }
+  : { events: MOCK_EVENTS, authenticated: false, user: null }
 console.log(initialState)
 
 
