@@ -3,7 +3,7 @@ import { env } from 'cloudflare:test';
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
 import { applySchema } from './setup';
-import googleSyncRouter from '../src/routes/sync/google';
+import googleSyncRouter from '../src/routes/api/sync/google';
 import { JobAction, Providers } from '../src/queue';
 import type { Bindings, Variables } from '../src/types';
 

@@ -1,9 +1,9 @@
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod'
-import { CreateEventSchema, TimeWindowSchema, UpdateEventSchema } from '../db/schema';
-import type { Bindings, Variables } from '../types';
-import { JobAction, Providers, type Job } from '../queue';
+import { CreateEventSchema, TimeWindowSchema, UpdateEventSchema } from '../../db/schema';
+import type { Bindings, Variables } from '../../types';
+import { JobAction, Providers, type Job } from '../../queue';
 
 const eventsRouter = new Hono<{ Bindings: Bindings, Variables: Variables }>();
 
