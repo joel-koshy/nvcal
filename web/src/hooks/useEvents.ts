@@ -2,16 +2,16 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { api } from '@/utils/api';
 import { getWeekDays } from '@/utils/date';
 
-import type { Event } from '@/types/events';
+import type { Event, CreateEventInput, UpdateEventInput } from "@nvcal/domain";
 import type { ApiResponse } from '@/types/api';
-import type { CreateEventRequest, UpdateEventRequest } from '@/types/api/events';
+
 
 // TODO: Replace with real calendar ID from user's calendars
 export const DEFAULT_CALENDAR_ID = 'cal_001';
 
 export interface EventMutations {
-  createEvent(req: CreateEventRequest): Promise<Event>;
-  updateEvent(id: string, req: UpdateEventRequest): Promise<Event>;
+  createEvent(req: CreateEventInput): Promise<Event>;
+  updateEvent(id: string, req: UpdateEventInput): Promise<Event>;
   deleteEvent(id: string, version: number): Promise<void>;
 }
 

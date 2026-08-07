@@ -1,6 +1,6 @@
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-interface ApiError {
+export interface ApiError {
   status: number;
   message: string;
 }

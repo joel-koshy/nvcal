@@ -1,19 +1,14 @@
 import { Hono } from 'hono';
 import { sign, verify } from 'hono/jwt';
 import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
-import { z } from 'zod';
+import { AuthSuccessSchema, LogoutResponseSchema, CredentialsSchema } from '@nvcal/domain';
+import { typedJson } from '../../util/typed';
 import { hashPassword, verifyPassword } from '../../util/crypto';
 import type { Bindings, Variables, JwtPayload } from '../../types';
 import googleAuth from './google';
 
 const authRouter = new Hono<{ Bindings: Bindings }>();
 authRouter.route('/google', googleAuth)
-
-
-const CredentialsSchema = z.object({
-	email: z.email(),
-	password: z.string().min(8, "Password must be at least 8 characters"),
-})
 authRouter.post("/signup", async (c) => {
 	const body = await c.req.json();
 	const parsed = CredentialsSchema.safeParse(body);
@@ -57,7 +52,7 @@ authRouter.post("/signup", async (c) => {
 		path: '/'
 	})
 
-	return c.json({ success: true, user_id: userId }, 201);
+	return typedJson(c, AuthSuccessSchema, { success: true, user_id: userId }, 201);
 })
 
 
@@ -104,7 +99,7 @@ authRouter.post("/login", async (c) => {
 	})
 
 
-	return c.json({ success: true, user_id: user.id }, 200);
+	return typedJson(c, AuthSuccessSchema, { success: true, user_id: user.id }, 200);
 });
 
 
@@ -116,7 +111,7 @@ authRouter.post('/logout', (c) => {
 		httpOnly: true,
 		sameSite: 'Lax',
 	});
-	return c.json({ success: true }, 200);
+	return typedJson(c, LogoutResponseSchema, { success: true }, 200);
 });
 
 export default authRouter;

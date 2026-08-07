@@ -9,7 +9,7 @@ import EventBlock from '@/components/EventBlock';
 import DraftBlock from '@/components/DraftBlock';
 import { DEFAULT_CALENDAR_ID } from '@/hooks/useEvents';
 
-import type { Event } from '@/types/events';
+import type { Event } from "@nvcal/domain";
 import type { DraftEvent } from "@/types/ui";
 import type { EventMutations } from '@/hooks/useEvents';
 
@@ -298,7 +298,7 @@ export function MainWeek({ date, setDate, events, loading, mutations }: MainWeek
           <input
             name="is_all_day"
             type="checkbox"
-            defaultChecked={draft?.originalEvent?.is_all_day || false}
+            defaultChecked={Boolean(draft?.originalEvent?.is_all_day)}
           />
         </VimFormRow>
 

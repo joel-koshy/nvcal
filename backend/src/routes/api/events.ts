@@ -1,9 +1,10 @@
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod'
-import { CreateEventSchema, TimeWindowSchema, UpdateEventSchema } from '../../db/schema';
+import { CreateEventSchema, TimeWindowSchema, UpdateEventSchema, EventListResponseSchema, EventResponseSchema, EventConflictResponseSchema } from '@nvcal/domain';
 import type { Bindings, Variables } from '../../types';
 import { JobAction, Providers, type Job } from '../../queue';
+import { typedJson } from '../../util/typed';
 
 const eventsRouter = new Hono<{ Bindings: Bindings, Variables: Variables }>();
 
@@ -30,7 +31,7 @@ eventsRouter.get("/", zValidator('query', TimeWindowSchema), async (c) => {
 		return c.json({ error: "Database Error" }, 500);
 	}
 
-	return c.json({ events: results }, 200);
+	return typedJson(c, EventListResponseSchema, { events: results }, 200);
 })
 
 
@@ -86,10 +87,10 @@ eventsRouter.post("/", zValidator("json", CreateEventSchema), async (c) => {
 			action: JobAction.EXPORT_EVENT
 		}
 		c.env.SYNC_QUEUE.send(job);
-		return c.json({ event }, 202)
+		return typedJson(c, EventResponseSchema, { event }, 202);
 	}
 
-	return c.json({ event }, 201);
+	return typedJson(c, EventResponseSchema, { event }, 201);
 })
 
 
@@ -156,14 +157,14 @@ eventsRouter.put("/:id", zValidator("json", UpdateEventSchema), async (c) => {
 	if (meta.changes == 0) {
 		const existingEvent = await c.env.DB.
 			prepare(`
-				SELECT version FROM events
+				SELECT * FROM events
 				WHERE id = ?
 			`).bind(eventId).first()
 		if (!existingEvent) {
 			return c.json({ error: "Event not found" }, 404);
 		}
 		// Existing event suggests we failed because of version mismatch
-		return c.json({ error: "Conflict", currentState: existingEvent }, 409);
+		return typedJson(c, EventConflictResponseSchema, { error: "Conflict", currentState: existingEvent }, 409);
 	}
 
 	const updatedEvent = await c.env.DB.
@@ -183,10 +184,10 @@ eventsRouter.put("/:id", zValidator("json", UpdateEventSchema), async (c) => {
 			action: JobAction.EXPORT_EVENT
 		}
 		c.env.SYNC_QUEUE.send(job);
-		return c.json({ updatedEvent }, 202)
+		return typedJson(c, EventResponseSchema, { event: updatedEvent }, 202);
 	}
 
-	return c.json({ event: updatedEvent }, 200);
+	return typedJson(c, EventResponseSchema, { event: updatedEvent }, 200);
 })
 
 const DeleteSchema = z.object({
@@ -220,7 +221,7 @@ eventsRouter.delete("/:id", zValidator("query", DeleteSchema), async (c) => {
 		const currentState = await c.env.DB.prepare(
 			"SELECT * FROM events WHERE id = ?"
 		).bind(eventId).first();
-		return c.json({ error: "Conflict", currentState }, 409);
+		return typedJson(c, EventConflictResponseSchema, { error: "Conflict", currentState }, 409);
 	}
 
 	if (calData.is_external) {
@@ -229,7 +230,8 @@ eventsRouter.delete("/:id", zValidator("query", DeleteSchema), async (c) => {
 				action: 'PUT',
 				provider: Providers.GOOGLE,
 				userId: userId,
-				eventId: eventId
+				eventId: eventId,
+				externalCalendarId: ""
 			},
 			action: JobAction.EXPORT_EVENT
 		}
