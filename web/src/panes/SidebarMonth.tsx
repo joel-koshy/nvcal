@@ -32,7 +32,7 @@ export function SidebarMonth({ date, setDate }: SidebarMonthProps) {
   usePane('sidebar', {
     cols: 7, 
     flow: 'row', 
-    neighbors: {right: 'main'}
+    neighbors: { right: 'main', down: 'sidebar-calendars' }
   });
 
   return (

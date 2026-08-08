@@ -1,4 +1,4 @@
-import type { Event } from "@nvcal/domain";
+import type { Calendar, Event } from "@nvcal/domain";
 
 // --- Mock Data ---
 export const MOCK_CALENDAR_COLORS: Record<string, string> = {
@@ -7,6 +7,19 @@ export const MOCK_CALENDAR_COLORS: Record<string, string> = {
   'cal_3': '#ea76cb', // Pink
   'cal_4': '#ea76cb'  // Pink
 };
+
+const baseCalendar = (id: string, name: string, color_hex: string, is_external: number): Calendar => ({
+  id, name, color_hex, timezone: 'UTC', is_external,
+  external_provider: null, external_calendar_id: null,
+  sync_token: null, sync_channel_id: null, sync_resource_id: null,
+  version: 1,
+});
+
+export const MOCK_CALENDARS: Calendar[] = [
+  baseCalendar('cal_1', 'Work', '#dc8a78', 0),
+  baseCalendar('cal_2', 'Standups', '#04a5e5', 0),
+  baseCalendar('cal_3', 'Deep Work', '#ea76cb', 0),
+];
 
 export const MOCK_EVENTS: Event[] = [
   {
