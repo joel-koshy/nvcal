@@ -1,9 +1,9 @@
-import { useState, useContext } from 'preact/hooks';
+import { useState, useContext, useEffect, useRef } from 'preact/hooks';
 import { VimContext } from '@/hooks/vim/VimProvider';
 import { usePane } from '@/hooks/vim/usePane';
 import { useNavigable } from '@/hooks/vim/useNavigable';
 import { VimDialog, VimFormRow } from '@/components/DialogBox';
-import { api } from '@/utils/api';
+import { api, AUTH_REQUIRED_EVENT } from '@/utils/api';
 
 import type { ApiResponse } from '@/types/api';
 
@@ -62,6 +62,9 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
   const [authTab, setAuthTab] = useState<AuthTab>('login');
   const [loggedIn, setLoggedIn] = useState(initialLoggedIn);
   const [authError, setAuthError] = useState('');
+  // Ref mirror so the mounted listener never re-subscribes or goes stale
+  const showAuthRef = useRef(false);
+  showAuthRef.current = showAuth;
 
   usePane('topbar', {
     cols: 1,
@@ -70,6 +73,7 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
   });
 
   const openAuth = () => {
+    if (showAuthRef.current) return;
     setShowAuth(true);
     setAuthError('');
     setAuthTab('login');
@@ -88,6 +92,12 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
       if (btn) btn.focus();
     }, 0);
   };
+
+  // Any protected API call that returns 401 opens the login modal
+  useEffect(() => {
+    window.addEventListener(AUTH_REQUIRED_EVENT, openAuth);
+    return () => window.removeEventListener(AUTH_REQUIRED_EVENT, openAuth);
+  }, []);
 
   const handleLogout = async () => {
     try {
