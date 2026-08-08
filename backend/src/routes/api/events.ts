@@ -40,10 +40,10 @@ eventsRouter.post("/", zValidator("json", CreateEventSchema), async (c) => {
 	const userId = c.get("userId");
 	const calendar = await c.env.DB.
 		prepare(`
-			SELECT id, is_external from calendars
+			SELECT is_external, external_calendar_id FROM calendars
 			WHERE id = ? AND user_id = ?
 		`).bind(data.calendar_id, userId)
-		.first();
+		.first<{ is_external: number; external_calendar_id: string }>();
 
 	if (!calendar) {
 		return c.json({ error: "Calendar not Found" }, 404);
@@ -82,7 +82,8 @@ eventsRouter.post("/", zValidator("json", CreateEventSchema), async (c) => {
 				action: 'POST',
 				provider: Providers.GOOGLE,
 				userId: userId,
-				eventId: eventId
+				eventId: eventId,
+				externalCalendarId: calendar.external_calendar_id
 			},
 			action: JobAction.EXPORT_EVENT
 		}
@@ -115,11 +116,11 @@ eventsRouter.put("/:id", zValidator("json", UpdateEventSchema), async (c) => {
 	// 2. Verify the target calendar belongs to the user
 	const targetCalendar = await c.env.DB.
 		prepare(`
-			SELECT id, is_external FROM calendars
+			SELECT is_external, external_calendar_id FROM calendars
 			WHERE id = ? AND user_id = ?
 		`)
 		.bind(data.calendar_id, userId)
-		.first();
+		.first<{ is_external: number; external_calendar_id: string }>();
 	if (!targetCalendar) {
 		return c.json({ error: "Calendar not Found" }, 404);
 	}
@@ -179,7 +180,8 @@ eventsRouter.put("/:id", zValidator("json", UpdateEventSchema), async (c) => {
 				action: 'PUT',
 				provider: Providers.GOOGLE,
 				userId: userId,
-				eventId: eventId
+				eventId: eventId,
+				externalCalendarId: targetCalendar.external_calendar_id
 			},
 			action: JobAction.EXPORT_EVENT
 		}
@@ -201,11 +203,11 @@ eventsRouter.delete("/:id", zValidator("query", DeleteSchema), async (c) => {
 	// check if the event exists and is owned by the user
 	const calData = await c.env.DB.
 		prepare(`
-			SELECT e.id, c.is_external FROM calendars c
+			SELECT e.external_event_id, c.is_external, c.external_calendar_id FROM calendars c
 			INNER JOIN events e ON e.calendar_id = c.id
 			WHERE c.user_id = ? AND e.id = ?
 		`).bind(userId, eventId)
-		.first();
+		.first<{ external_event_id: string | null; is_external: number; external_calendar_id: string }>();
 	if (!calData) {
 		return c.json({ error: "Event not found" }, 404);
 	}
@@ -225,17 +227,21 @@ eventsRouter.delete("/:id", zValidator("query", DeleteSchema), async (c) => {
 	}
 
 	if (calData.is_external) {
-		const job: Job = {
-			payload: {
-				action: 'PUT',
-				provider: Providers.GOOGLE,
-				userId: userId,
-				eventId: eventId,
-				externalCalendarId: ""
-			},
-			action: JobAction.EXPORT_EVENT
+		// Only enqueue a Google delete when the event was actually exported.
+		// If external_event_id is null there is nothing on Google to remove.
+		if (calData.external_event_id) {
+			const job: Job = {
+				payload: {
+					action: 'DELETE',
+					provider: Providers.GOOGLE,
+					userId: userId,
+					externalCalendarId: calData.external_calendar_id,
+					externalEventId: calData.external_event_id
+				},
+				action: JobAction.EXPORT_EVENT
+			}
+			c.env.SYNC_QUEUE.send(job);
 		}
-		c.env.SYNC_QUEUE.send(job);
 		return c.body(null, 204);
 	}
 
