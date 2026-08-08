@@ -5,7 +5,7 @@ import z from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { Job, JobAction, Providers } from "../../../queue";
 import { typedJson } from "../../../util/typed";
-import { CalendarListResponseSchema } from "@nvcal/domain";
+import { GoogleCalendarListResponseSchema } from "@nvcal/domain";
 
 interface GoogleCalendarListResponse {
 	items: Array<{
@@ -36,7 +36,7 @@ googleSyncRouter.get('/calendars', async (c) => {
 		color: cal.backgroundColor
 	}));
 
-	return typedJson(c, CalendarListResponseSchema, { calendars: availableCalendars });
+	return typedJson(c, GoogleCalendarListResponseSchema, { calendars: availableCalendars });
 })
 
 
