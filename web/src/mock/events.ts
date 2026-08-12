@@ -1,4 +1,4 @@
-import type { Calendar, Event } from "@nvcal/domain";
+import type { Calendar, Event, GoogleCalendarItem } from "@nvcal/domain";
 
 // --- Mock Data ---
 export const MOCK_CALENDAR_COLORS: Record<string, string> = {
@@ -19,6 +19,13 @@ export const MOCK_CALENDARS: Calendar[] = [
   baseCalendar('cal_1', 'Work', '#dc8a78', 0),
   baseCalendar('cal_2', 'Standups', '#04a5e5', 0),
   baseCalendar('cal_3', 'Deep Work', '#ea76cb', 0),
+];
+
+/** Discoverable Google calendars returned by the sync route. */
+export const MOCK_GOOGLE_CALENDARS: GoogleCalendarItem[] = [
+  { id: 'mg1', name: 'Team', color: '#dc8a78' },
+  { id: 'mg2', name: 'Birthdays', color: '#04a5e5' },
+  { id: 'mg3', name: 'Holidays', color: '#a6e3a1' },
 ];
 
 export const MOCK_EVENTS: Event[] = [

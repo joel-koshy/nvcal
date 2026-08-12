@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { api } from '@/utils/api';
-import type { Calendar } from "@nvcal/domain";
+import type { Calendar, CalendarListResponse } from "@nvcal/domain";
 import type { ApiError } from '@/utils/api';
 
 interface UseCalendarsReturn {
@@ -9,18 +9,28 @@ interface UseCalendarsReturn {
   error: string | null;
 }
 
-export function useCalendars(): UseCalendarsReturn {
-  const [calendars, setCalendars] = useState<Calendar[]>([]);
-  const [loading, setLoading] = useState(true);
+/**
+ * Calendar fetcher. Seeds from the server's embedded initial state (no
+ * round-trip on first paint), then re-fetches on mount to reconcile with
+ * anything that changed server-side since render.
+ *
+ * Purely data lifecycle — auth failures are surfaced by the api layer
+ * (login modal) and arrive here as a plain error.
+ */
+export function useCalendars(initial: Calendar[]): UseCalendarsReturn {
+  const [calendars, setCalendars] = useState(initial);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
 
-    api<{ calendars: Calendar[] }>('/api/calendars')
+    api<CalendarListResponse>('/api/calendars')
       .then((res) => {
         if (mounted) {
           setCalendars(res.calendars);
+          setError(null);
           setLoading(false);
         }
       })

@@ -143,6 +143,119 @@ body {
   gap: 0.5rem;
 }
 
+.calendars-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 4px;
+}
+
+.calendars-header-row .header {
+  flex: 1;
+  margin: 0;
+  text-align: left;
+}
+
+.add-calendar-btn {
+  background: transparent;
+  border: 1px solid #313244;
+  color: #89b4fa;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-calendar-btn:hover {
+  border-color: #89b4fa;
+  background: rgba(137, 180, 250, 0.1);
+  color: #89b4fa;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-swatches {
+  display: flex;
+  gap: 8px;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid #313244;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.color-swatch:hover {
+  border-color: #cdd6f4;
+}
+
+/* Picked preset */
+.color-swatch.selected {
+  border-color: #89b4fa;
+  box-shadow: inset 0 0 0 2px rgba(30, 30, 46, 0.6);
+}
+
+.import-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.import-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #cdd6f4;
+  font-family: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.import-item:hover {
+  border-color: #89b4fa;
+  color: #89b4fa;
+}
+
+/* Vim cursor state */
+.import-item:focus {
+  outline: 2px solid #f38ba8;
+  outline-offset: -2px;
+}
+
+/* Picked calendars */
+.import-item.checked {
+  border-color: #89b4fa;
+  background: rgba(137, 180, 250, 0.1);
+  color: #89b4fa;
+}
+
+.import-check {
+  width: 1rem;
+  text-align: center;
+  font-weight: bold;
+  color: #89b4fa;
+}
+
 .calendars-header {
   font-size: 0.75rem;
   font-weight: bold;
@@ -462,6 +575,11 @@ body {
   accent-color: #89b4fa;
   width: 1rem;
   height: 1rem;
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .oauth-btn {
