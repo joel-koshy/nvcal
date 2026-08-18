@@ -1,9 +1,9 @@
 import { Hono } from "hono";
-import type { Bindings, Variables } from "../../types"
-import { getValidTokenGoogle } from "../../util/oauth";
+import type { Bindings, Variables } from "../../../types"
+import { getValidTokenGoogle } from "../../../util/oauth";
 import z from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { Job, JobAction, Providers } from "../../queue";
+import { Job, JobAction, Providers } from "../../../queue";
 
 interface GoogleCalendarListResponse {
 	items: Array<{
