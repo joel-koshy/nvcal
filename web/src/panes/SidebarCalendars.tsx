@@ -1,7 +1,6 @@
 import { useState } from 'preact/hooks';
 import { useNavigable } from '@/hooks/vim/useNavigable';
 import { usePane } from '@/hooks/vim/usePane';
-import { useCalendars } from '@/hooks/useCalendars';
 import type { Calendar } from "@nvcal/domain";
 
 interface CalendarItemProps {
@@ -27,29 +26,25 @@ function CalendarItem({ calendar, isActive, onClick }: CalendarItemProps) {
   );
 }
 
-export function SidebarCalendars() {
-  const { calendars, loading, error } = useCalendars();
+interface SidebarCalendarsProps {
+  calendars: Calendar[];
+  loading: boolean;
+  error: string | null;
+}
+
+export function SidebarCalendars({ calendars, loading, error }: SidebarCalendarsProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   usePane('sidebar-calendars', {
     cols: 1,
     flow: 'col',
-    neighbors: { up: 'sidebar' },
+    neighbors: { up: 'sidebar', right: 'main' },
   });
 
   if (loading) {
     return <div class="calendars-loading">Loading calendars...</div>;
   }
 
-  // if (!authenticated) {
-  //   return (
-  //     <div class="calendars-auth-required">
-  //       <span>🔒</span>
-  //       <div>Please log in to view calendars</div>
-  //     </div>
-  //   );
-  // }
-  //
   if (error) {
     return <div class="calendars-error">Error: {error}</div>;
   }
@@ -63,7 +58,7 @@ export function SidebarCalendars() {
 
   return (
     <div class="sidebar-calendars">
-      <div class="calendars-header">Calendars</div>
+      <div class="header">Calendars</div>
       <div class="calendars-list">
         {calendars.map((calendar, index) => (
           <CalendarItem

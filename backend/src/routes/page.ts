@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { getCookie } from 'hono/cookie';
 import { verify } from 'hono/jwt';
+import { PageStateSchema } from '@nvcal/domain';
 import type { Bindings, Variables } from '../types';
 import { JwtPayload } from '../types';
 import { template } from "../generated/template"
@@ -40,8 +41,9 @@ pageRouter.get('/', async (c) => {
 		// Not logged in or invalid token
 	}
 
-	// Get events for current week, filtered by user if logged in
+	// Get events for current week + the user's calendars, filtered by session
 	let events: Record<string, unknown>[] = [];
+	let calendars: Record<string, unknown>[] = [];
 	if (userId) {
 		const { start, end } = getCurrentWeekBounds();
 		const result = await c.env.DB
@@ -57,13 +59,26 @@ pageRouter.get('/', async (c) => {
 			.bind(userId, start, end)
 			.all();
 		events = result.results;
+
+		const calResult = await c.env.DB
+			.prepare(`
+				SELECT * FROM calendars
+				WHERE user_id = ?
+				ORDER BY name ASC
+			`)
+			.bind(userId)
+			.all();
+		calendars = calResult.results;
 	}
 
-	const dbState = {
+	// Validate the bootstrap against the unified page-state contract —
+	// strips ownership columns (user_id), materializes entity defaults.
+	const dbState = PageStateSchema.parse({
 		events,
+		calendars,
 		authenticated: !!userId,
 		user: userId ? { id: userId } : null,
-	};
+	});
 	const baseResponse = new Response(template, {
 		headers: { 'content-type': 'text/html;charset=UTF-8' }
 	})

@@ -1,4 +1,4 @@
-import type { Event } from "@nvcal/domain";
+import type { Event, PageState } from "@nvcal/domain";
 
 export interface DraftEvent {
   eventId?: string;
@@ -10,12 +10,8 @@ export interface DraftEvent {
   date: Date;
 }
 
-export interface UserInfo {
-  id: string;
-}
-
-export interface NvCalState {
-  events: Event[];
-  authenticated: boolean;
-  user: UserInfo | null;
-}
+/**
+ * The server-embedded bootstrap state. Shape owned by @nvcal/domain
+ * (PageStateSchema) — this alias exists only so the SPA has one name for it.
+ */
+export type NvCalState = PageState;

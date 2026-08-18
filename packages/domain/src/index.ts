@@ -9,3 +9,4 @@ export * from "./api/responses/auth";
 export * from "./api/responses/events";
 export * from "./api/responses/calendars";
 export * from "./api/responses/sync";
+export * from "./api/responses/page";

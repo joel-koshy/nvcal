@@ -4,12 +4,12 @@ import { App } from './app.tsx'
 import type { NvCalState } from './types/ui.ts';
 
 // TODO Remove MOCK EVENTS in produciton
-import { MOCK_EVENTS } from './mock/events.ts';
+import { MOCK_EVENTS, MOCK_CALENDARS } from './mock/events.ts';
 
 const stateNode = document.getElementById('initial-state');
 const initialState: NvCalState = stateNode
   ? JSON.parse(stateNode.textContent || '{}')
-  : { events: MOCK_EVENTS, authenticated: false, user: null }
+  : { events: MOCK_EVENTS, calendars: MOCK_CALENDARS, authenticated: false, user: null }
 console.log(initialState)
 
 

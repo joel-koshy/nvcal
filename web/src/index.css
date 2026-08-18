@@ -136,6 +136,98 @@ body {
   text-transform: uppercase;
 }
 
+/* --- Sidebar Calendar List --- */
+.sidebar-calendars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.calendars-header {
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6c7086;
+  padding: 0 4px;
+}
+
+.calendars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calendar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #cdd6f4;
+  font-family: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.calendar-item:hover {
+  border-color: #89b4fa;
+  color: #89b4fa;
+}
+
+/* Vim cursor state */
+.calendar-item:focus {
+  outline: 2px solid #f38ba8;
+  outline-offset: -2px;
+}
+
+/* Selected calendar (the .active index) */
+.calendar-item.active {
+  border-color: #89b4fa;
+  background: rgba(137, 180, 250, 0.1);
+  color: #89b4fa;
+  font-weight: bold;
+}
+
+.calendar-color-indicator {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background: var(--calendar-color, #6c7086);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.calendar-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.calendar-external-badge {
+  margin-left: auto;
+  color: #a6adc8;
+  font-size: 0.7rem;
+}
+
+.calendars-loading,
+.calendars-empty {
+  color: #6c7086;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+}
+
+.calendars-error {
+  color: #f38ba8;
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  border: 1px solid #f38ba8;
+  background: rgba(243, 139, 168, 0.1);
+}
+
 /* --- Main Week View --- */
 .week-container {
   flex: 1;
@@ -475,3 +567,5 @@ body {
   /* Keeping it a square block rather than a rounded dot fits the brutalist UI perfectly */
   border: 1px solid rgba(0, 0, 0, 0.3);
 }
+
+
