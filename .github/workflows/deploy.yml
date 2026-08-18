@@ -1,0 +1,98 @@
+# ============================================================================
+# NVCAL — Production Deploy
+#
+# Pipeline:  web SPA build (Vite single-file)  →  compile into backend template
+#            →  wrangler deploy (Cloudflare Worker serving HTML + API)
+#
+# Triggers:  push to `prod` branch  ·  manual via Actions UI (workflow_dispatch)
+#
+# One-time prerequisites (not handled by this workflow):
+#   1. Cloudflare API token with Workers Scripts:Edit, D1:Edit, Queues:Edit,
+#      Account Settings:Read  →  store as GitHub secret CF_API_TOKEN
+#      Account ID               →  store as GitHub secret CF_ACCOUNT_ID
+#   2. Create D1 DB remotely and put the REAL database_id into
+#      backend/wrangler.jsonc (currently "local-dev-placeholder").
+#   3. Create the queue once:  wrangler queues create nvcal-sync-queue
+#   4. Apply schema.sql ONCE manually (it contains DROP TABLE — destructive):
+#        wrangler d1 execute nvcal-db --remote --file=schema.sql
+#      To run it from CI instead, uncomment the `preCommands` block below.
+#   5. GitHub secrets: JWT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+#      GOOGLE_REDIRECT_URI, APP_URL
+#   6. Register <APP_URL>/auth/google/callback as an authorized redirect URI
+#      in the Google OAuth client.
+# ============================================================================
+
+name: Deploy to Production
+
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+
+# Never run two deploys concurrently; queue the next one instead.
+concurrency:
+  group: nvcal-deploy-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  deploy:
+    name: Build & Deploy nvcal-backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # Root workspaces install web/, backend/, and @nvcal/domain in one shot.
+      # Keep the ROOT package-lock.json in sync when deps change.
+      - name: Install dependencies (npm workspaces)
+        run: npm ci
+
+      - name: Build web SPA (single-file dist/index.html)
+        run: npm run web:build
+
+      - name: Compile SPA into backend template
+        # Reads web/dist/index.html → backend/src/generated/template.ts
+        run: npm run build-template -w backend
+
+      - name: Deploy Worker to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: backend
+          wranglerVersion: "4.92.0"
+          command: deploy --var GOOGLE_CLIENT_ID:"${{ env.GOOGLE_CLIENT_ID }}" GOOGLE_REDIRECT_URI:"${{ env.GOOGLE_REDIRECT_URI }}" APP_URL:"${{ env.APP_URL }}"
+          secrets: |
+            JWT_SECRET
+            GOOGLE_CLIENT_SECRET
+          # Non-sensitive bindings → written via `wrangler deploy --var`
+          vars: |
+            GOOGLE_CLIENT_ID
+            GOOGLE_REDIRECT_URI
+            APP_URL
+
+        env:
+          # wrangler-action reads the values above from the step environment
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
+          APP_URL: ${{ secrets.APP_URL }}
+
+      # Optional smoke check after deploy (enable once APP_URL is live):
+      # - name: Smoke test
+      #   run: curl -sfI "$APP_URL" -H "Accept: text/html" || exit 1
+      #   env:
+      #     APP_URL: ${{ secrets.APP_URL }}
