@@ -1,4 +1,5 @@
-import type { Context, StatusCode } from "hono";
+import type { Context } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { z } from "zod";
 
 /**
@@ -11,7 +12,7 @@ export function typedJson<S extends z.ZodType>(
 	c: Context,
 	schema: S,
 	body: unknown,
-	status: StatusCode = 200,
+	status: ContentfulStatusCode = 200,
 ): Response | Promise<Response> {
 	const parsed = schema.safeParse(body);
 	if (!parsed.success) {

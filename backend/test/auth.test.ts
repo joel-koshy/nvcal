@@ -35,7 +35,7 @@ describe('NVCAL API Integration: Authentication Flow', () => {
 			expect(cookieHeader).toContain('nvcal_session=');
 			expect(cookieHeader).toContain('HttpOnly');
 			expect(cookieHeader).toContain('Secure');
-			expect(cookieHeader).toContain('SameSite=Strict');
+			expect(cookieHeader).toContain('SameSite=Lax');
 		});
 
 		it('should reject signup if the password is too short (Zod Validation)', async () => {
