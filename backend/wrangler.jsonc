@@ -17,9 +17,9 @@
 
 	"d1_databases": [
 		{
-			"binding": "DB", 
+			"binding": "DB",
 			"database_name": "nvcal-db",
-			"database_id": "local-dev-placeholder"
+			"database_id": "3bd7c71b-5e95-404b-8660-b951ca7aaf63"
 
 		}
 	],
