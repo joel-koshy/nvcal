@@ -6,8 +6,15 @@ export interface ApiError {
 }
 
 /**
+ * Fired on a 401 from a protected route so the app can open the login modal.
+ * Auth routes are excluded — a failed login already sits inside the modal.
+ */
+export const AUTH_REQUIRED_EVENT = 'auth:required';
+
+/**
  * Thin fetch wrapper. Backend returns Zod-serialized JSON —
- * we just parse and return. Errors are normalised into { status, message }.
+ * we just parse and return. Errors are surfaced as { status, message },
+ * and an unauthorized response dispatches AUTH_REQUIRED_EVENT.
  */
 export async function api<T>(
   path: string,
@@ -27,6 +34,9 @@ export async function api<T>(
 
   if (!res.ok) {
     console.error(`[api] ${method} ${path} → ${res.status}`, data);
+    if (res.status === 401 && !path.startsWith('/auth')) {
+      window.dispatchEvent(new CustomEvent(AUTH_REQUIRED_EVENT));
+    }
     throw {
       status: res.status,
       message: (data as { error?: string })?.error ?? res.statusText,
