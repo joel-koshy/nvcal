@@ -1,0 +1,477 @@
+/* src/index.css */
+body {
+  margin: 0;
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #1e1e2e;
+  /* Dark terminal aesthetic */
+  color: #cdd6f4;
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: 100vh;
+}
+
+.sidebar {
+  background-color: #181825;
+  border-right: 1px solid #313244;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.branding {
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: #f38ba8;
+  /* Red accent */
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: hidden;
+}
+
+.topbar {
+  height: 60px;
+  border-bottom: 1px solid #313244;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+}
+
+.topbar-btn {
+  background: transparent;
+  color: #cdd6f4;
+  border: 1px solid #313244;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.topbar-btn:hover {
+  border-color: #89b4fa;
+  color: #89b4fa;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #313244;
+  margin-bottom: 1rem;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  color: #6c7086;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.auth-tab:hover {
+  color: #cdd6f4;
+}
+
+.auth-tab.active {
+  color: #89b4fa;
+  border-bottom-color: #89b4fa;
+}
+
+.auth-error {
+  color: #f38ba8;
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  border: 1px solid #f38ba8;
+  background: rgba(243, 139, 168, 0.1);
+}
+
+/* --- Sidebar Month Grid --- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cell {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.cell:focus {
+  outline: 2px solid #f38ba8;
+}
+
+.cell.active {
+  background-color: #89b4fa;
+  color: #1e1e2e;
+  font-weight: bold;
+}
+
+.day-label {
+  text-align: center;
+  font-weight: bold;
+  padding-bottom: 0.5rem;
+}
+
+.header {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+/* --- Main Week View --- */
+.week-container {
+  flex: 1;
+  overflow-y: hidden;
+  background-color: #1e1e2e;
+  display: flex;
+  flex-direction: column;
+}
+
+.week-container.is-fetching {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.grid-viewport {
+  overflow-y: scroll;
+  position: relative;
+  flex: 1;
+
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, minmax(0, 1fr));
+  grid-template-rows: 50px repeat(24, 60px);
+  row-gap: 0;
+}
+
+.draft-block {
+  background-color: rgba(137, 180, 250, 0.4);
+  border: 2px solid #89b4fa;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  z-index: 20;
+}
+
+.draft-block:focus {
+  border-color: #f38ba8;
+  /* Red focus border */
+  background-color: rgba(243, 139, 168, 0.4);
+}
+
+.draft-label {
+  font-size: 0.75rem;
+  color: #1e1e2e;
+  font-weight: bold;
+  padding: 4px;
+  display: block;
+}
+
+.time-gutter-header {
+  border-bottom: 1px solid #313244;
+  border-right: 1px solid #313244;
+  box-shadow: 0 8px 0 0 transparent;
+  /* acts as margin bottom */
+  background-color: #181825;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.day-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #313244;
+  border-right: 1px solid #313244;
+  box-shadow: 0 8px 0 0 transparent;
+  /* acts as margin bottom */
+  background-color: #181825;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.day-name {
+  font-size: 0.8rem;
+  color: #a6adc8;
+  text-transform: uppercase;
+}
+
+.day-num {
+  font-size: 1.5rem;
+  color: #cdd6f4;
+}
+
+.active-day .day-num {
+  color: #f38ba8;
+  font-weight: bold;
+}
+
+.time-label {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 0.5rem;
+  color: #a6adc8;
+  font-size: 0.75rem;
+  border-right: 1px solid #313244;
+  transform: translateY(-8px);
+}
+
+.time-slot {
+  background: transparent;
+  cursor: text;
+  transition: background-color 0.1s;
+}
+
+.time-slot-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-bottom: 1px solid #313244;
+  border-right: 1px solid #313244;
+}
+
+.time-slot:hover {
+  background-color: #313244;
+}
+
+.time-slot:focus {
+  outline: 2px solid #f38ba8;
+  outline-offset: -2px;
+  background-color: rgba(243, 139, 168, 0.1);
+}
+
+.dialog-floating {
+  position: fixed;
+  z-index: 200;
+  /* Smoothly track the block when it resizes */
+  transition: opacity 0.1s, top 0.1s, left 0.1s;
+}
+
+.dialog-floating .dialog-content {
+  box-shadow: 12px 12px 0px rgba(0, 0, 0, 0.5);
+  border-color: #89b4fa;
+}
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.dialog-content {
+  background: #1e1e2e;
+  border: 1px solid #313244;
+  padding: 2rem;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.5);
+}
+
+.dialog-content h3 {
+  margin-top: 0;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+/* Normal Mode Focus */
+.form-row:focus {
+  border-color: #f38ba8;
+  background: rgba(243, 139, 168, 0.1);
+}
+
+.form-row input {
+  background: #181825;
+  border: 1px solid #313244;
+  color: #cdd6f4;
+  padding: 0.75rem;
+  outline: none;
+  font-family: inherit;
+}
+
+/* Insert Mode Focus */
+.form-row input:focus {
+  border-color: #89b4fa;
+  box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2);
+}
+
+.save-btn {
+  background: #89b4fa;
+  color: #1e1e2e;
+  padding: 0.75rem;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  padding: 0.75rem 1rem;
+  min-width: 2.5rem;
+}
+
+/* DateTime inputs */
+.form-row input[type="datetime-local"] {
+  background: #181825;
+  border: 1px solid #313244;
+  color: #cdd6f4;
+  padding: 0.75rem;
+  outline: none;
+  font-family: inherit;
+  color-scheme: dark;
+}
+
+.form-row input[type="datetime-local"]:focus {
+  border-color: #89b4fa;
+  box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2);
+}
+
+/* Checkbox */
+.form-row input[type="checkbox"] {
+  accent-color: #89b4fa;
+  width: 1rem;
+  height: 1rem;
+}
+
+.oauth-btn {
+  color: #89b4fa;
+  background: #1e1e2e;
+  padding: 0.75rem;
+  border: 1px solid #89b4fa;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  padding: 0.75rem 1rem;
+  min-width: 2.5rem;
+
+}
+
+/* Delete button */
+.delete-btn {
+  background: transparent;
+  color: #f38ba8;
+  padding: 0.75rem;
+  border: 1px solid #f38ba8;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.delete-btn:hover {
+  background: #f38ba8;
+  color: #1e1e2e;
+}
+
+/* --- Base Time Slot --- */
+.time-slot {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  /* Handled by custom focus */
+  cursor: crosshair;
+  /* Subtly indicates a targetable area */
+}
+
+/* Vim Cursor / Hover State */
+.time-slot:focus {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* --- Floating Event Picker (The Intercept Island) --- */
+.slot-picker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Centered directly over the cursor */
+  z-index: 100;
+  /* Absolute priority over all grid overlays */
+
+  background: #1e1e2e;
+  /* Terminal background */
+  border: 1px solid #cdd6f4;
+  /* High-contrast stark border */
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+  /* Brutalist hard drop-shadow */
+
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  white-space: nowrap;
+}
+
+/* --- Picker Items --- */
+.slot-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #bac2de;
+  user-select: none;
+}
+
+/* --- Vim Visual Selection State --- */
+.slot-picker-item.highlighted {
+  background: #cdd6f4;
+  /* Stark highlight */
+  color: #1e1e2e;
+  /* Invert text to force maximum contrast */
+  font-weight: bold;
+}
+
+/* Color Indicator */
+.picker-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  /* Keeping it a square block rather than a rounded dot fits the brutalist UI perfectly */
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}

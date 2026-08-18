@@ -1,0 +1,17 @@
+{
+  "name": "nvcal",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "web:build": "npm run build --prefix web",
+    "backend:compile": "npm run build-template --prefix backend",
+    "backend:dev": "npm run dev --prefix backend",
+    
+    "dev": "npm run web:build && npm run backend:compile && npm run backend:dev"
+
+  }
+}
