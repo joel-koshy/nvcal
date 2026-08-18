@@ -17,7 +17,7 @@ export function App({ initialData }: AppProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const containerRef = useRef<HTMLDivElement>(null);
   const { events, loading, mutations } = useEvents(currentDate, initialData.events);
-  const calendars = useCalendars(initialData.calendars);
+  const calendars = useCalendars();
 
   return (
     <VimProvider initialPane='sidebar'>
