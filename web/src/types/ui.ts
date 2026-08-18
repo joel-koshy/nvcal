@@ -1,4 +1,4 @@
-import type { Event } from "./events";
+import type { Event } from "@nvcal/domain";
 
 export interface DraftEvent {
   eventId?: string;

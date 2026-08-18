@@ -6,12 +6,16 @@
   "author": "",
   "type": "commonjs",
   "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "backend",
+    "web"
+  ],
   "scripts": {
-    "web:build": "npm run build --prefix web",
-    "backend:compile": "npm run build-template --prefix backend",
-    "backend:dev": "npm run dev --prefix backend",
-    
-    "dev": "npm run web:build && npm run backend:compile && npm run backend:dev"
-
+    "web:build": "npm run build -w web",
+    "backend:dev": "npm run dev -w backend",
+    "dev": "npm run web:build && npm run backend:dev",
+    "domain:typecheck": "npm run typecheck -w @nvcal/domain"
   }
 }

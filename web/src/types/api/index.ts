@@ -1,37 +1,15 @@
-export type { EventRoute } from './events';
-export type { AuthRoute } from './auth';
-export type { Credentials, AuthSuccess } from './auth';
-export type {
-  TimeWindow,
-  CreateEventRequest,
-  UpdateEventRequest,
-  GetEventsResponse,
-  CreateEventResponse,
-  UpdateEventResponse,
-  ConflictResponse,
-} from './events';
+// App-layer API contract maps. The web holds no copies of domain shapes; the
+// route maps reference @nvcal/domain types directly. Consumers import the
+// top-level ApiRoute / ApiResponse surface.
 
-import type { EventRoute } from './events';
-import type { AuthRoute } from './auth';
+export type { EventRoute } from "./events";
+export type { AuthRoute } from "./auth";
 
-// ─── Shared Primitives ───────────────────────────────────────────────────────
+import type { EventRoute } from "./events";
+import type { AuthRoute } from "./auth";
 
-/** Backend error envelope. */
-export interface ApiError {
-  error: string;
-  issues?: string[];
-}
-
-// ─── Unified Route Map ──────────────────────────────────────────────────────
-
-/**
- * Exhaustive mapping of every API route to its return type.
- * Use with `api<T>(path)` for compile-time safety.
- *
- * Example:
- *   const res = await api<ApiRoute['/api/events GET']>('/api/events?…');
- */
+/** Mapping of every API route to its return type. */
 export interface ApiRoute extends EventRoute, AuthRoute {}
 
-/** Infer response type from a route key. */
+/** Infer a route's response type from its route key. */
 export type ApiResponse<R extends keyof ApiRoute> = ApiRoute[R];

@@ -9,9 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "preact": "^10.29.1"
+    "preact": "^10.29.1",
+    "@nvcal/domain": "*"
   },
   "devDependencies": {
+    "zod": "^4.4.3",
     "@preact/preset-vite": "^2.10.5",
     "@types/node": "^24.12.2",
     "rollup-plugin-visualizer": "^7.0.1",
