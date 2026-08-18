@@ -13,12 +13,10 @@ export type Bindings = {
 /** Hono context Variables */
 export type Variables = {
 	userId: string;
-	jwtPayload: {
-		sub?: string;
-		exp?: number;
-	};
+	jwtPayload: JwtPayload;
 };
 
 export type JwtPayload = {
 	sub: string;
+	exp: number;
 }

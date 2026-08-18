@@ -7,7 +7,7 @@ import { api } from '@/utils/api';
 
 import type { ApiResponse } from '@/types/api';
 
-function AuthButton({ onActivate }: { onActivate: () => void }) {
+function LoginButton({ onActivate }: { onActivate: () => void }) {
   const vimRef = useNavigable<HTMLButtonElement>('topbar');
 
   return (
@@ -28,17 +28,39 @@ function AuthButton({ onActivate }: { onActivate: () => void }) {
   );
 }
 
+function LogoutButton({ onActivate }: { onActivate: () => void }) {
+  const vimRef = useNavigable<HTMLButtonElement>('topbar');
+
+  return (
+    <button
+      ref={vimRef}
+      class="topbar-btn"
+      onClick={onActivate}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === 'i') {
+          e.preventDefault();
+          e.stopPropagation();
+          onActivate();
+        }
+      }}
+    >
+      Logout
+    </button>
+  );
+}
+
 interface TopbarProps {
   currentDate: Date;
+  loggedIn: boolean;
 }
 
 type AuthTab = 'login' | 'signup';
 
-export function Topbar({ currentDate }: TopbarProps) {
+export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) {
   const vimContext = useContext(VimContext);
   const [showAuth, setShowAuth] = useState(false);
   const [authTab, setAuthTab] = useState<AuthTab>('login');
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(initialLoggedIn);
   const [authError, setAuthError] = useState('');
 
   usePane('topbar', {
@@ -65,6 +87,16 @@ export function Topbar({ currentDate }: TopbarProps) {
       const btn = document.querySelector('.topbar-btn') as HTMLElement;
       if (btn) btn.focus();
     }, 0);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api<ApiResponse<'/auth/logout POST'>>('/auth/logout', 'POST');
+      setLoggedIn(false);
+      vimContext?.setActivePane('main');
+    } catch (err: any) {
+      console.error('Logout failed:', err);
+    }
   };
 
   const handleLogin = async (e: SubmitEvent) => {
@@ -118,8 +150,10 @@ export function Topbar({ currentDate }: TopbarProps) {
       <header class="topbar">
         <h2>Week of {currentDate.toLocaleDateString()}</h2>
 
-        {!loggedIn && (
-          <AuthButton onActivate={openAuth} />
+        {loggedIn ? (
+          <LogoutButton onActivate={handleLogout} />
+        ) : (
+          <LoginButton onActivate={openAuth} />
         )}
       </header>
 

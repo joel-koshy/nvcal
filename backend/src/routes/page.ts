@@ -33,7 +33,7 @@ pageRouter.get('/', async (c) => {
 	try {
 		const token = getCookie(c, 'nvcal_session');
 		if (token) {
-			const { payload } = await verify(token, c.env.JWT_SECRET, 'HS256') as { payload: JwtPayload };
+			const payload = await verify(token, c.env.JWT_SECRET, 'HS256') as JwtPayload;
 			userId = payload.sub;
 		}
 	} catch {
@@ -59,7 +59,11 @@ pageRouter.get('/', async (c) => {
 		events = result.results;
 	}
 
-	const dbState = { events };
+	const dbState = {
+		events,
+		authenticated: !!userId,
+		user: userId ? { id: userId } : null,
+	};
 	const baseResponse = new Response(template, {
 		headers: { 'content-type': 'text/html;charset=UTF-8' }
 	})
