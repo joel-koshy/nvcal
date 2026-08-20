@@ -104,6 +104,7 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
       await api<ApiResponse<'/auth/logout POST'>>('/auth/logout', 'POST');
       setLoggedIn(false);
       vimContext?.setActivePane('main');
+      window.location.reload();
     } catch (err: any) {
       console.error('Logout failed:', err);
     }
@@ -126,6 +127,8 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
     } catch (err: any) {
       setAuthError(err.message || 'Login failed');
     }
+    // doesn't work for some reason? 
+    window.location.reload();
   };
 
   const handleSignup = async (e: SubmitEvent) => {
