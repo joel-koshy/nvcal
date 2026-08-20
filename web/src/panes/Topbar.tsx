@@ -17,6 +17,7 @@ function LoginButton({ onActivate }: { onActivate: () => void }) {
       onClick={onActivate}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === 'i') {
+          console.log("hit")
           e.preventDefault();
           e.stopPropagation();
           onActivate();
@@ -38,6 +39,7 @@ function LogoutButton({ onActivate }: { onActivate: () => void }) {
       onClick={onActivate}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === 'i') {
+          console.log("hit")
           e.preventDefault();
           e.stopPropagation();
           onActivate();
@@ -124,6 +126,8 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
       setLoggedIn(true);
       setShowAuth(false);
       vimContext?.setActivePane('main');
+      window.location.reload();
+
     } catch (err: any) {
       setAuthError(err.message || 'Login failed');
     }
