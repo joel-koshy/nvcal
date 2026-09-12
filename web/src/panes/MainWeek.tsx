@@ -253,6 +253,7 @@ export function MainWeek({ date, setDate, events, loading, mutations }: MainWeek
       <VimDialog
         isOpen={!!draft}
         anchorId="draft-event-block"
+        id="draft-dialog"
         title={draft?.eventId ? `Edit: ${draft.originalEvent?.title}` : `New: ${draft?.date.toLocaleString([], { weekday: 'short', hour: 'numeric' })}`}
         onClose={closeDialog}
         onSubmit={handleSubmit}
@@ -302,7 +303,10 @@ export function MainWeek({ date, setDate, events, loading, mutations }: MainWeek
           />
         </VimFormRow>
 
-        <VimFormRow>
+        <VimFormRow onClickAction={() => {
+          const form = document.getElementById('draft-dialog') as HTMLFormElement;
+          if (form) form.requestSubmit();
+        }}>
           <button class="save-btn" type="submit">Save (Enter)</button>
         </VimFormRow>
 

@@ -218,7 +218,7 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
               <input name="password" type="password" placeholder="••••••••" />
             </VimFormRow>
 
-            <VimFormRow paneName="login-dialog">
+            <VimFormRow paneName="login-dialog" onClickAction={() => (document.getElementById('login-dialog') as HTMLFormElement | null)?.requestSubmit()}>
               <button class="save-btn" type="submit">Login</button>
             </VimFormRow>
           </>
@@ -239,7 +239,7 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
               <input name="confirmPassword" type="password" placeholder="••••••••" />
             </VimFormRow>
 
-            <VimFormRow paneName="login-dialog">
+            <VimFormRow paneName="login-dialog" onClickAction={() => (document.getElementById('login-dialog') as HTMLFormElement | null)?.requestSubmit()}>
               <button class="save-btn" type="submit">Sign Up</button>
             </VimFormRow>
           </>
