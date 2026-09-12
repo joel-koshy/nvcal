@@ -125,6 +125,24 @@ function ImportItem({ item, checked, onToggle }: ImportItemProps) {
   );
 }
 
+function EmptyCalendarItem() {
+  const vimRef = useNavigable<HTMLButtonElement>('sidebar-calendars');
+  return (
+    <button
+      ref={vimRef}
+      class="calendar-item empty-placeholder"
+    >
+      <span
+        class="calendar-color-indicator"
+        style={{ border: '1px dashed currentColor', background: 'transparent' }}
+      ></span>
+      <span class="calendar-name" style={{ fontStyle: 'italic', opacity: 0.7 }}>
+        No calendars found
+      </span>
+    </button>
+  );
+}
+
 interface SidebarCalendarsProps {
   calendars: Calendar[];
   loading: boolean;
@@ -252,10 +270,10 @@ export function SidebarCalendars({ calendars, loading, error }: SidebarCalendars
 
       {loading ? (
         <div class="calendars-loading">Loading calendars...</div>
-      ) : error ? (
-        <div class="calendars-error">Error: {error}</div>
       ) : calendars.length === 0 ? (
-        <div class="calendars-empty">No calendars found</div>
+        <div class="calendars-list">
+          <EmptyCalendarItem />
+        </div>
       ) : (
         <div class="calendars-list">
           {calendars.map((calendar, index) => (
