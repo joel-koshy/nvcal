@@ -55,6 +55,11 @@ body {
   cursor: pointer;
 }
 
+.topbar-btn:focus {
+  border-color: #f38ba8;
+  outline: none;
+}
+
 .topbar-btn:hover {
   border-color: #89b4fa;
   color: #89b4fa;
@@ -685,5 +690,3 @@ body {
   /* Keeping it a square block rather than a rounded dot fits the brutalist UI perfectly */
   border: 1px solid rgba(0, 0, 0, 0.3);
 }
-
-
