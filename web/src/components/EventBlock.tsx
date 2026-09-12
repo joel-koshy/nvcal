@@ -15,17 +15,12 @@ export default function EventBlock({ layout, onEdit, onMove }: { layout: EventLa
       tabIndex={0}
       style={{
         position: 'absolute',
+        backgroundColor: color,
         top: `${layout.top}%`,
         height: `${layout.height}%`,
         left: `${layout.left}%`,
         width: `${layout.width}%`,
-        backgroundColor: color,
-        border: '1px solid #1e1e2e',
-        borderRadius: '4px',
-        padding: '2px 4px',
-        fontSize: '0.75rem',
-        overflow: 'hidden',
-        pointerEvents: 'auto'
+
       }}
 
       onKeyDown={(e) => {
@@ -41,7 +36,7 @@ export default function EventBlock({ layout, onEdit, onMove }: { layout: EventLa
         }
       }}
     >
-      <strong>{layout.event.title}</strong>
+      <div>{layout.event.title}</div>
     </div>
   );
 }
