@@ -1,61 +1,80 @@
-# NVCAL Architecture & Context Document
+# NVCAL repository instructions
 
-## 1. System Objective
-NVCAL is a brutalist, hyper-optimized, VIM-navigable calendar web application. The absolute primary constraint is that the **entire application (HTML + CSS + Interactive JavaScript) must be delivered in a single HTTP request under 14.6 KB** (fitting perfectly within a single TCP slow-start packet window). 
+## Project overview
 
-## 2. Tech Stack & Build Tools
-* **Framework:** Preact + TypeScript. Chosen because it provides a modern Virtual DOM and component architecture but features a microscopic ~3 KB baseline runtime.
-* **Bundler:** Vite.
-* **Minification:** Terser (configured to aggressively drop console logs and debuggers).
-* **Vite Plugins:**
-    * `vite-plugin-singlefile`: Forces Rollup to inline all JS and CSS directly into the `index.html` file, preventing subsequent network round-trips.
-    * `vite-plugin-compression2`: Generates Brotli (`.br`) and Gzip (`.gz`) artifacts to precisely measure the byte budget.
-    * `rollup-plugin-visualizer`: Generates a `stats.html` treemap to audit bundle sizes.
-* **Monorepo (npm workspaces):** a single root workspace with three packages — `web/` (Preact SPA), `backend/` (Cloudflare Worker), and `packages/domain/` (`@nvcal/domain`). Zod schemas live once in `@nvcal/domain` and are the single source of truth shared by both frontend and backend.
-* **Backend stack:** Hono + Cloudflare D1 (SQLite) + Queues, with `@hono/zod-validator`. Incoming bodies are validated against `@nvcal/domain` request schemas; outgoing responses are validated against `@nvcal/domain` response schemas.
-* **Unified type layer:** entities (`Event`, `Calendar`, `Task`), request bodies, and response shapes are defined once in `@nvcal/domain`. The backend uses them for runtime validation; the SPA imports them as type-only references, so they contribute **zero bytes** to the single-file bundle.
+NVCAL is a VIM-navigable calendar application in an npm-workspaces monorepo:
 
-## 3. Strict Constraints & Trade-offs
-* **Zero Dependency Policy:** Heavy date math libraries and headless UI wrappers are banned. Calendar grids must be generated using native JavaScript `Date` APIs.
-* **Single-File Drawbacks:** Inlining the app into `index.html` breaks browser file caching and prohibits code-splitting (no dynamic `import()`). Given the <10KB total size, network handshakes take longer than the download, making these trade-offs highly acceptable.
-* **The Favicon Void:** To prevent Vite's SPA fallback from serving the entire application a second time when the browser requests a favicon, the HTML must include a 31-byte empty data URI: `<link rel="icon" href="data:,">`.
-
-## 4. Security Architecture & XSS Nuances
-Because `vite-plugin-singlefile` places all JavaScript directly inside the HTML, standard strict Content Security Policies (CSP) will block the app from running.
-* **CSP Requirement:** The hosting server must output a CSP containing `script-src 'unsafe-inline'`.
-* **XSS Mitigation:** By allowing inline scripts, the app relies entirely on Preact's context-aware auto-escaping. Preact uses `textContent` (not `innerHTML`) to bind data, neutralizing 99% of injected `<script>` tags by rendering them as literal text.
-* **The Dangerous 1% (Strict Rules):**
-    1.  **Never** use `dangerouslySetInnerHTML`. If rich text from a database is required, it must be passed through a strict DOM sanitizer first.
-    2.  **Never** bind user data to a generic `href` without validating that it begins with `https://`. This prevents `javascript:alert(1)` URI execution attacks.
-    3.  **Always** use Preact's standard JSX prop bindings to prevent unquoted attribute injection.
-
-## 5. Repository Structure
 ```text
 nvcal/
-├── packages/domain/      # @nvcal/domain — single source of truth (zod schemas)
-│   └── src/
-│       ├── entities/     # Event, Calendar, Task schemas (output/input)
-│       ├── api/          # Request schemas: Create/Update/TimeWindow, Credentials
-│       └── api/responses/ # Response contracts enforced by backend routes
-├── backend/              # Cloudflare Worker (Hono + D1 + Queues + zod)
-│   └── src/
-│       ├── routes/       # api/events, api/sync, auth, page, webhooks
-│       ├── queue/        # export / import / webhook processors
-│       └── util/         # crypto, oauth, typed response helper
-└── web/                  # Preact single-file SPA (<14 KB gzip)
-    └── src/
-        ├── panes/       # MainWeek, SidebarMonth, SidebarCalendars, Topbar
-        ├── hooks/       # useEvents, useCalendars, vim/ engine (VimProvider, usePane, useNavigable)
-        ├── components/  # DialogBox, DraftBlock, EventBlock, Timeslot
-        ├── types/       # UI-only shapes + API route maps (type-only, 0 bytes)
-        ├── mock/        # MOCK_EVENTS / calendar colors (dev fallback)
-        └── utils/       # api fetch wrapper, native-JS date math
+├── packages/domain/   # @nvcal/domain: shared Zod schemas and inferred types
+├── backend/           # Hono Cloudflare Worker, D1, Queues, OAuth, API
+└── web/               # Preact + TypeScript SPA, built as one HTML artifact
 ```
 
-## 6. Key Implementation Details
-* **VIM Navigation Engine:** Navigation is entirely decoupled from the DOM structure using a global Context provider. Using usePane(), components define localized cols, flow, and neighbors. The engine dynamically calculates a mathematical (X, Y) coordinate map for the UI.
-    Micro-Navigation (h,j,k,l): Moves the cursor sequentially through the 2D coordinate map, featuring row-wrapping logic. 
-    Macro-Navigation (Shift + H,J,K,L): Jumps between adjacent layout panes using the defined neighbors graph.
-* The "Wormhole" and "Island Pane" Patterns: The EventDialog is registered as a functioning pane (so j/k works on the inputs) but defines an empty neighbor map (neighbors: {}), making it an "Island." It cannot be reached by macro-navigation. Instead, components use the "Wormhole Pattern," utilizing
-* **Bulletproof Path Aliasing:** In `vite.config.ts`, the `@` alias is defined using `fileURLToPath(new URL('./src', import.meta.url))` to ensure correct ESM path resolution across all operating systems and terminal environments.
-* **Typed API responses:** every JSON endpoint passes its body through `typedJson(c, schema, body, status)` (`backend/src/util/typed.ts`), which validates the shape against the matching `@nvcal/domain` response schema. A handler whose response drifts from its declared contract returns 500 rather than leaking a malformed payload.
+The application is intended to be delivered by the Worker as a single HTML response. The frontend build currently produces an inlined `web/dist/index.html`, plus `.br`, `.gz`, and `stats.html` artifacts. The 14.6 KB compressed transfer target is a hard design constraint, but it is not currently met: the latest local build was approximately 16.52 kB gzip and 14.66 kB Brotli. Re-measure after frontend changes rather than assuming the budget passes.
+
+## Repository conventions
+
+- Use native `Date` APIs for calendar/date calculations. Do not add heavy date or UI dependencies.
+- Put shared entities, request schemas, and response schemas in `packages/domain/src/`; import them from both applications. Frontend domain imports should remain type-only when runtime validation is unnecessary.
+- Keep API response validation centralized through `backend/src/util/typed.ts` and use the matching `@nvcal/domain` response schema for successful JSON responses.
+- Preserve optimistic-concurrency `version` checks on event and calendar mutations.
+- Treat `backend/schema.sql` as destructive because it begins by dropping tables. Use `backend/seed.sql` and the existing `db:reset` command only when a local database reset is intended.
+- Preserve existing user changes. In particular, do not overwrite unrelated edits in `web/src/panes/SidebarCalendars.tsx` or generated/build-audit files.
+
+## Frontend
+
+The frontend entry point is `web/src/main.tsx`; the root composition is in `web/src/app.tsx`. UI is organized into:
+
+- `web/src/panes/`: `SidebarMonth`, `SidebarCalendars`, `MainWeek`, and `Topbar`.
+- `web/src/components/`: `DialogBox`, `DraftBlock`, `EventBlock`, and `Timeslot`.
+- `web/src/hooks/`: event/calendar data hooks and the VIM engine.
+- `web/src/utils/`: API wrapper and native-JavaScript date helpers.
+- `web/src/types/`: UI and API route-map types.
+
+VIM navigation is provided by `web/src/hooks/vim/VimProvider.tsx`. `usePane()` registers a pane’s flow, columns, and macro-neighbors; `useNavigable()` registers focusable nodes. Lowercase `h/j/k/l` moves within a pane, while uppercase `H/J/K/L` follows the pane-neighbor graph. `VimDialog` in `web/src/components/DialogBox.tsx` is an island pane with no macro-neighbors; its close/reposition behavior is the wormhole back to the originating node.
+
+The Vite alias is currently implemented with `path.resolve(__dirname, './src')` in `web/vite.config.ts`. Do not document or rely on a different alias implementation unless it is changed in the config. The build uses `vite-plugin-singlefile`, `vite-plugin-compression2`, `rollup-plugin-visualizer`, and Terser. Terser is configured with `drop_console: false` and `drop_debugger: false` at present, so debug logging still affects the bundle.
+
+`web/index.html` must retain the empty favicon data URI (`<link rel="icon" href="data:,">`) to avoid a second SPA fallback request. Since JavaScript is inlined, deployment CSP must allow inline scripts (`script-src 'unsafe-inline'`). Never use `dangerouslySetInnerHTML`; use normal Preact bindings for user data. Validate any future user-controlled URL before binding it to an `href`.
+
+## Backend
+
+`backend/src/app.ts` mounts:
+
+- `/api/*` behind the JWT cookie middleware and user-id loader.
+- `/auth` for password and Google authentication.
+- `/webhooks` for provider callbacks.
+- `/` for the HTML page route.
+
+The page route (`backend/src/routes/page.ts`) performs soft session authentication, loads the current user’s week and calendars, validates the bootstrap with `PageStateSchema`, and injects JSON initial state into the compiled HTML. The HTML template is generated at `backend/src/generated/template.ts` by `backend/scripts/compile-template.js`; this generated file is ignored and should be regenerated instead of hand-editing it.
+
+Backend integrations include Cloudflare D1, Queues, and Google Calendar OAuth/synchronization. Bindings are described in `backend/src/types.ts` and configured in `backend/wrangler.jsonc`. Changes to bindings require `npm run cf-typegen -w backend` and review of the generated worker declarations.
+
+## Commands
+
+From the repository root:
+
+```sh
+npm ci                         # install all workspace dependencies
+npm run domain:typecheck       # typecheck @nvcal/domain
+npm run web:build              # typecheck and build the single-file frontend
+npm run build-template -w backend # copy web/dist/index.html into Worker source
+npm test --workspace nvcal-backend -- --run
+npm run dev                    # build frontend, then start the local Worker flow
+```
+
+The backend test suite uses `@cloudflare/vitest-pool-workers` and the local Wrangler/D1 environment. It may require permission to write Wrangler logs and bind a local address in restricted environments.
+
+Before handing off frontend work, inspect `web/dist/index.html`, `web/dist/index.html.gz`, `web/dist/index.html.br`, and `web/stats.html`. Before handing off backend changes, run the relevant Vitest tests and verify route/schema changes against the shared domain contracts.
+
+## Security
+
+- Keep ownership checks server-side; never trust a user ID from request bodies.
+- Validate request bodies/query parameters with the shared Zod schemas or a narrowly scoped route schema.
+- Keep OAuth tokens and JWT secrets in Worker secrets/bindings, never source files.
+- Avoid HTML injection in both the bootstrap state and rendered UI. If rich text is ever introduced, sanitize it before rendering.
+
+## More specific instructions
+
+When working under `backend/`, also follow `backend/AGENTS.md`; it requires current Cloudflare documentation for Worker, D1, Queue, and related platform tasks. `web/AGENTS.md` is currently empty.
