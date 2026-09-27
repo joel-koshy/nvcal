@@ -125,19 +125,40 @@ function ImportItem({ item, checked, onToggle }: ImportItemProps) {
   );
 }
 
-function EmptyCalendarItem() {
+function EmptyCalendarItem({
+  onCreate,
+  label = 'No calendars found',
+}: {
+  onCreate: () => void;
+  label?: string;
+}) {
   const vimRef = useNavigable<HTMLButtonElement>('sidebar-calendars');
+
   return (
     <button
+      type="button"
       ref={vimRef}
       class="calendar-item empty-placeholder"
+      onClick={onCreate}
+      onKeyDown={(e) => {
+        if (e.key === 'i') {
+          e.preventDefault();
+          e.stopPropagation();
+          onCreate();
+        }
+      }}
+      aria-label="Create calendar"
     >
       <span
         class="calendar-color-indicator"
         style={{ border: '1px dashed currentColor', background: 'transparent' }}
-      ></span>
-      <span class="calendar-name" style={{ fontStyle: 'italic', opacity: 0.7 }}>
-        No calendars found
+      >
+      +
+      </span>
+      <span class="calendar-name" 
+        style={{ fontStyle: 'italic', opacity: 0.7 }}
+      >
+        {label}
       </span>
     </button>
   );
@@ -151,7 +172,7 @@ interface SidebarCalendarsProps {
 
 type CreateTab = 'create' | 'import';
 
-export function SidebarCalendars({ calendars, loading, error }: SidebarCalendarsProps) {
+export function SidebarCalendars({ calendars, loading }: SidebarCalendarsProps) {
   const vimContext = useContext(VimContext);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
@@ -212,7 +233,7 @@ export function SidebarCalendars({ calendars, loading, error }: SidebarCalendars
     setShowCreate(false);
     vimContext?.setActivePane('sidebar-calendars');
     setTimeout(() => {
-      const target = (document.querySelector('.calendar-item') ?? document.querySelector('.add-calendar-btn')) as HTMLElement | null;
+      const target = document.querySelector('.calendar-item') as HTMLElement | null;
       target?.focus();
     }, 0);
   };
@@ -265,14 +286,13 @@ export function SidebarCalendars({ calendars, loading, error }: SidebarCalendars
     <div class="sidebar-calendars">
       <div class="calendars-header-row">
         <div class="header">Calendars</div>
-        <button class="add-calendar-btn" onClick={openCreate} aria-label="Create calendar">+</button>
       </div>
 
       {loading ? (
         <div class="calendars-loading">Loading calendars...</div>
       ) : calendars.length === 0 ? (
         <div class="calendars-list">
-          <EmptyCalendarItem />
+          <EmptyCalendarItem onCreate={openCreate} />
         </div>
       ) : (
         <div class="calendars-list">
@@ -285,6 +305,7 @@ export function SidebarCalendars({ calendars, loading, error }: SidebarCalendars
               onCreate={openCreate}
             />
           ))}
+          <EmptyCalendarItem onCreate={openCreate} label="Create new Calendar" />
         </div>
       )}
 

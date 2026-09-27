@@ -162,27 +162,6 @@ body {
   text-align: left;
 }
 
-.add-calendar-btn {
-  background: transparent;
-  border: 1px solid #313244;
-  color: #89b4fa;
-  width: 24px;
-  height: 24px;
-  line-height: 1;
-  font-size: 1.1rem;
-  cursor: pointer;
-  font-family: inherit;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.add-calendar-btn:hover {
-  border-color: #89b4fa;
-  background: rgba(137, 180, 250, 0.1);
-  color: #89b4fa;
-}
-
 .color-picker {
   display: flex;
   align-items: center;
@@ -314,9 +293,11 @@ body {
 }
 
 .calendar-color-indicator {
-  width: 10px;
-  height: 10px;
-  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--calendar-color, #6c7086);
   border: 1px solid rgba(0, 0, 0, 0.3);
 }
