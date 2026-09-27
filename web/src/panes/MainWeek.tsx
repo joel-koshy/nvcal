@@ -242,7 +242,7 @@ export function MainWeek({ date, setDate, events, loading, mutations }: MainWeek
   const endDefault = new Date(startDefault.getTime() + (draft?.duration ?? 1) * 3600000);
 
   const formatHour = (h: number) => {
-    if (h === 0) return '12 AM';
+    if (h === 0) return '';
     if (h === 12) return '12 PM';
     return h < 12 ? `${h} AM` : `${h - 12} PM`;
   };
