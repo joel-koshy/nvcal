@@ -1,4 +1,4 @@
-import type { Calendar, Event } from "@nvcal/domain";
+import type { Calendar, Event, GoogleCalendarItem } from "@nvcal/domain";
 
 // --- Mock Data ---
 export const MOCK_CALENDAR_COLORS: Record<string, string> = {
@@ -21,19 +21,26 @@ export const MOCK_CALENDARS: Calendar[] = [
   baseCalendar('cal_3', 'Deep Work', '#ea76cb', 0),
 ];
 
+/** Discoverable Google calendars returned by the sync route. */
+export const MOCK_GOOGLE_CALENDARS: GoogleCalendarItem[] = [
+  { id: 'mg1', name: 'Team', color: '#dc8a78' },
+  { id: 'mg2', name: 'Birthdays', color: '#04a5e5' },
+  { id: 'mg3', name: 'Holidays', color: '#a6e3a1' },
+];
+
 export const MOCK_EVENTS: Event[] = [
   {
     // event is at 9 am
     id: 'evt_1', calendar_id: 'cal_1', task_id: null,
     title: 'Architecture Review', description: 'Single-file constraint discussion',
-    start_time: '2026-05-21T13:00:00Z', end_time: '2026-05-21T14:00:00Z', // 1 hour
+    start_time: '2026-09-09T13:00:00Z', end_time: '2026-09-09T14:00:00Z', // 1 hour
     is_all_day: 0, rrule: null, external_event_id: null, version: 1
   },
   {
     // event is at 9: 30 am
     id: 'evt_2', calendar_id: 'cal_2', task_id: null,
     title: 'Standup', description: null,
-    start_time: '2026-05-21T13:30:00Z', end_time: '2026-05-21T17:00:00Z', // 0.5 hour (overlaps evt_1)
+    start_time: '2026-09-12T13:30:00Z', end_time: '2026-05-21T17:00:00Z', // 0.5 hour (overlaps evt_1)
     is_all_day: 0, rrule: null, external_event_id: null, version: 1
   },
   {

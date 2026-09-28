@@ -1,10 +1,17 @@
 //@ts-nocheck: idek anymore
 import { env } from "cloudflare:test";
-import rawSchema from "../schema.sql?raw"; 
+import resetSql from "../db/reset.sql?raw";
+import usersAndOauth from "../db/migrations/0001_users_and_oauth.sql?raw";
+import calendars from "../db/migrations/0002_calendars.sql?raw";
+import tasks from "../db/migrations/0003_tasks.sql?raw";
+import events from "../db/migrations/0004_events.sql?raw";
 
 export async function applySchema() {
-	// 1. Strip all SQL comments (-- style) using a regex
-	const noComments = rawSchema.replace(/--.*/g, '');
+	const migrationSql = [usersAndOauth, calendars, tasks, events].join('\n');
+	const sql = `${resetSql}\n${migrationSql}`;
+
+	// Strip all SQL comments (-- style) before splitting statements for D1.
+	const noComments = sql.replace(/--.*/g, '');
 
 	// 2. Split the giant string into individual statements by the semicolon
 	const statements = noComments

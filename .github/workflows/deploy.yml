@@ -11,14 +11,11 @@
 #      Account Settings:Read  →  store as GitHub secret CF_API_TOKEN
 #      Account ID               →  store as GitHub secret CF_ACCOUNT_ID
 #   2. Create D1 DB remotely and put the REAL database_id into
-#      backend/wrangler.jsonc (currently "local-dev-placeholder").
+#      backend/wrangler.jsonc.
 #   3. Create the queue once:  wrangler queues create nvcal-sync-queue
-#   4. Apply schema.sql ONCE manually (it contains DROP TABLE — destructive):
-#        wrangler d1 execute nvcal-db --remote --file=schema.sql
-#      To run it from CI instead, uncomment the `preCommands` block below.
-#   5. GitHub secrets: JWT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+#   4. GitHub secrets: JWT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
 #      GOOGLE_REDIRECT_URI, APP_URL
-#   6. Register <APP_URL>/auth/google/callback as an authorized redirect URI
+#   5. Register <APP_URL>/auth/google/callback as an authorized redirect URI
 #      in the Google OAuth client.
 # ============================================================================
 
@@ -66,13 +63,22 @@ jobs:
         # Reads web/dist/index.html → backend/src/generated/template.ts
         run: npm run build-template -w backend
 
+      - name: Apply production D1 migrations
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: backend
+          wranglerVersion: "4.98.0"
+          command: d1 migrations apply DB --remote
+
       - name: Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: backend
-          wranglerVersion: "4.92.0"
+          wranglerVersion: "4.98.0"
           command: deploy --var GOOGLE_CLIENT_ID:"${{ env.GOOGLE_CLIENT_ID }}" GOOGLE_REDIRECT_URI:"${{ env.GOOGLE_REDIRECT_URI }}" APP_URL:"${{ env.APP_URL }}"
           secrets: |
             JWT_SECRET

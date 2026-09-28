@@ -9,8 +9,11 @@
     "deploy": "wrangler deploy",
     "start": "wrangler dev",
     "test": "vitest",
-    "cf-typegen": "wrangler types",
-    "db:reset": "wrangler d1 execute nvcal-db --local --file=./schema.sql -y && wrangler d1 execute nvcal-db --local --file=./seed.sql -y"
+		"cf-typegen": "wrangler types",
+		"db:migrations": "wrangler d1 migrations apply nvcal-db --local",
+		"db:migrations:remote": "wrangler d1 migrations apply DB --remote",
+		"db:seed": "wrangler d1 execute nvcal-db --local --file=./db/seeds/001_demo_data.sql -y",
+    "db:reset": "wrangler d1 execute nvcal-db --local --file=./db/reset.sql -y && wrangler d1 migrations apply nvcal-db --local && wrangler d1 execute nvcal-db --local --file=./db/seeds/001_demo_data.sql -y"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.16.13",

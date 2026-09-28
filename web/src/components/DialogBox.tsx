@@ -160,8 +160,14 @@ export function VimFormRow({ children, onClickAction, paneName = 'dialog' }: Vim
     if (['i', 'a', 'Enter'].includes(e.key)) {
       e.preventDefault();
       const input = (e.currentTarget as HTMLElement).querySelector('input, textarea') as HTMLElement | null;
-      if (input) input.focus();
-      else if (onClickAction) onClickAction();
+      if (input) {
+        input.focus();
+      }
+      else if (onClickAction) {
+        onClickAction();
+      } else {
+        // debug
+      }
     }
   };
 

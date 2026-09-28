@@ -55,6 +55,11 @@ body {
   cursor: pointer;
 }
 
+.topbar-btn:focus {
+  border-color: #f38ba8;
+  outline: none;
+}
+
 .topbar-btn:hover {
   border-color: #89b4fa;
   color: #89b4fa;
@@ -143,22 +148,59 @@ body {
   gap: 0.5rem;
 }
 
-.calendars-header {
-  font-size: 0.75rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #6c7086;
+.calendars-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0 4px;
 }
 
-.calendars-list {
+.calendars-header-row .header {
+  flex: 1;
+  margin: 0;
+  text-align: left;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-swatches {
+  display: flex;
+  gap: 8px;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid #313244;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.color-swatch:hover {
+  border-color: #cdd6f4;
+}
+
+/* Picked preset */
+.color-swatch.selected {
+  border-color: #89b4fa;
+  box-shadow: inset 0 0 0 2px rgba(30, 30, 46, 0.6);
+}
+
+.import-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-.calendar-item {
+.import-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -171,7 +213,64 @@ body {
   font-size: 0.875rem;
   text-align: left;
   cursor: pointer;
-  transition: all 0.1s;
+}
+
+.import-item:hover {
+  border-color: #89b4fa;
+  color: #89b4fa;
+}
+
+/* Vim cursor state */
+.import-item:focus {
+  outline: 2px solid #f38ba8;
+  outline-offset: -2px;
+}
+
+/* Picked calendars */
+.import-item.checked {
+  border-color: #89b4fa;
+  background: rgba(137, 180, 250, 0.1);
+  color: #89b4fa;
+}
+
+.import-check {
+  width: 1rem;
+  text-align: center;
+  font-weight: bold;
+  color: #89b4fa;
+}
+
+.calendars-header {
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6c7086;
+  padding: 0 4px;
+}
+
+.calendars-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-item {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 6px;
+  padding-top: 0px;
+  padding-left: 8px;
+  padding-right: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #cdd6f4;
+  font-family: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
 }
 
 .calendar-item:hover {
@@ -194,9 +293,11 @@ body {
 }
 
 .calendar-color-indicator {
-  width: 10px;
-  height: 10px;
-  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--calendar-color, #6c7086);
   border: 1px solid rgba(0, 0, 0, 0.3);
 }
@@ -220,13 +321,13 @@ body {
   padding: 4px 8px;
 }
 
-.calendars-error {
-  color: #f38ba8;
-  font-size: 0.8rem;
-  padding: 0.5rem;
-  border: 1px solid #f38ba8;
-  background: rgba(243, 139, 168, 0.1);
-}
+/* .calendars-error { */
+/*   color: #f38ba8; */
+/*   font-size: 0.8rem; */
+/*   padding: 0.5rem; */
+/*   border: 1px solid #f38ba8; */
+/*   background: rgba(243, 139, 168, 0.1); */
+/* } */
 
 /* --- Main Week View --- */
 .week-container {
@@ -464,6 +565,11 @@ body {
   height: 1rem;
 }
 
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .oauth-btn {
   color: #89b4fa;
   background: #1e1e2e;
@@ -511,6 +617,20 @@ body {
 .time-slot:focus {
   background: rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.event-block {
+  border: 1px solid #1e1e2e;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.event-block div {
+  padding-top: 5px;
+  padding-left: 8px;
+  font-weight: bold;
 }
 
 /* --- Floating Event Picker (The Intercept Island) --- */
@@ -567,5 +687,3 @@ body {
   /* Keeping it a square block rather than a rounded dot fits the brutalist UI perfectly */
   border: 1px solid rgba(0, 0, 0, 0.3);
 }
-
-

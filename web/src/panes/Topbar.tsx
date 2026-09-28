@@ -17,6 +17,7 @@ function LoginButton({ onActivate }: { onActivate: () => void }) {
       onClick={onActivate}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === 'i') {
+          console.log("hit")
           e.preventDefault();
           e.stopPropagation();
           onActivate();
@@ -38,6 +39,7 @@ function LogoutButton({ onActivate }: { onActivate: () => void }) {
       onClick={onActivate}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === 'i') {
+          console.log("hit")
           e.preventDefault();
           e.stopPropagation();
           onActivate();
@@ -104,6 +106,7 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
       await api<ApiResponse<'/auth/logout POST'>>('/auth/logout', 'POST');
       setLoggedIn(false);
       vimContext?.setActivePane('main');
+      window.location.reload();
     } catch (err: any) {
       console.error('Logout failed:', err);
     }
@@ -123,9 +126,13 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
       setLoggedIn(true);
       setShowAuth(false);
       vimContext?.setActivePane('main');
+      window.location.reload();
+
     } catch (err: any) {
       setAuthError(err.message || 'Login failed');
     }
+    // doesn't work for some reason? 
+    window.location.reload();
   };
 
   const handleSignup = async (e: SubmitEvent) => {
@@ -211,7 +218,7 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
               <input name="password" type="password" placeholder="••••••••" />
             </VimFormRow>
 
-            <VimFormRow paneName="login-dialog">
+            <VimFormRow paneName="login-dialog" onClickAction={() => (document.getElementById('login-dialog') as HTMLFormElement | null)?.requestSubmit()}>
               <button class="save-btn" type="submit">Login</button>
             </VimFormRow>
           </>
@@ -232,7 +239,7 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
               <input name="confirmPassword" type="password" placeholder="••••••••" />
             </VimFormRow>
 
-            <VimFormRow paneName="login-dialog">
+            <VimFormRow paneName="login-dialog" onClickAction={() => (document.getElementById('login-dialog') as HTMLFormElement | null)?.requestSubmit()}>
               <button class="save-btn" type="submit">Sign Up</button>
             </VimFormRow>
           </>
