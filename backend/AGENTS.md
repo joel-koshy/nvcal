@@ -36,7 +36,7 @@ Bindings are defined in `src/types.ts` and `wrangler.jsonc`. They include D1, th
 - Validate successful JSON response bodies through `typedJson(c, schema, body, status)` and the matching `@nvcal/domain` response schema.
 - Preserve optimistic-concurrency `version` checks on event and calendar updates/deletes.
 - Keep shared entities and contracts in `packages/domain/src/`; do not duplicate domain schemas in the Worker.
-- Treat `schema.sql` as destructive: it starts by dropping tables. Do not run a remote reset casually.
+- Treat `db/reset.sql` as destructive: it drops application tables and migration history. Do not run it against a remote database.
 - Keep JWT secrets, OAuth secrets, and tokens in Worker secrets/bindings, never in source or committed local configuration.
 
 ## Commands
@@ -67,7 +67,7 @@ The production workflow builds the web artifact, compiles the Worker template, a
 4. Review route/schema changes and `backend/wrangler.jsonc` bindings.
 5. Confirm secrets and Google OAuth redirect configuration are supplied through the deployment environment.
 
-Do not apply `schema.sql` remotely without an explicit migration/reset plan; the file contains `DROP TABLE` statements.
+Apply numbered files from `db/migrations/` through `wrangler d1 migrations apply`; never use `db/reset.sql` remotely.
 
 ## Error and runtime guidance
 

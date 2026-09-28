@@ -19,7 +19,7 @@ The application is intended to be delivered by the Worker as a single HTML respo
 - Put shared entities, request schemas, and response schemas in `packages/domain/src/`; import them from both applications. Frontend domain imports should remain type-only when runtime validation is unnecessary.
 - Keep API response validation centralized through `backend/src/util/typed.ts` and use the matching `@nvcal/domain` response schema for successful JSON responses.
 - Preserve optimistic-concurrency `version` checks on event and calendar mutations.
-- Treat `backend/schema.sql` as destructive because it begins by dropping tables. Use `backend/seed.sql` and the existing `db:reset` command only when a local database reset is intended.
+- Database lifecycle files live under `backend/db/`: numbered forward-only migrations, optional seeds, and the destructive local-only `reset.sql`. Use `db:reset` only when a local database reset is intended.
 - Preserve existing user changes. In particular, do not overwrite unrelated edits in `web/src/panes/SidebarCalendars.tsx` or generated/build-audit files.
 
 ## Frontend
