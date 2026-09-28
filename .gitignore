@@ -1,4 +1,5 @@
 /backend/src/generated/template.ts
+/backend/src/generated/cached-template.ts
 node_modules/
 dist/
 .wrangler/

@@ -1,10 +1,11 @@
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { getCookie } from 'hono/cookie';
 import { verify } from 'hono/jwt';
 import { PageStateSchema } from '@nvcal/domain';
 import type { Bindings, Variables } from '../types';
 import { JwtPayload } from '../types';
 import { template } from "../generated/template"
+import { cachedTemplate } from "../generated/cached-template"
 
 const pageRouter = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
@@ -28,7 +29,8 @@ function getCurrentWeekBounds() {
 	};
 }
 
-pageRouter.get('/', async (c) => {
+function pageHandler(pageTemplate: string) {
+	return async (c: Context<{ Bindings: Bindings; Variables: Variables }>) => {
 	// Soft auth: try to get userId, but don't fail if not logged in
 	let userId: string | null = null;
 	try {
@@ -79,7 +81,7 @@ pageRouter.get('/', async (c) => {
 		authenticated: !!userId,
 		user: userId ? { id: userId } : null,
 	});
-	const baseResponse = new Response(template, {
+	const baseResponse = new Response(pageTemplate, {
 		headers: { 'content-type': 'text/html;charset=UTF-8' }
 	})
 
@@ -94,6 +96,10 @@ pageRouter.get('/', async (c) => {
 		.transform(baseResponse);
 
 	return rewritten;
-})
+	}
+}
+
+pageRouter.get('/', pageHandler(template));
+pageRouter.get('/cached', pageHandler(cachedTemplate));
 
 export default pageRouter;
