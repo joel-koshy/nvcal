@@ -71,10 +71,7 @@ googleSyncRouter.post('/import', zValidator('json', importRequestSchema), async 
 	}
 
 	await c.env.DB.batch(batchUpserts);
-	for (const job of qJobs) {
-		c.env.SYNC_QUEUE.send(job);
-
-	}
+	await Promise.all(qJobs.map((job) => c.env.SYNC_QUEUE.send(job)));
 
 	return new Response(null, { status: 202 });
 })
