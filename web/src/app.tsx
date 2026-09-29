@@ -29,12 +29,20 @@ export function App({ initialData }: AppProps) {
             calendars={calendars.calendars}
             loading={calendars.loading}
             error={calendars.error}
+            onCalendarsChanged={calendars.refresh}
           />
         </aside>
 
         <main class="main-content">
           <Topbar currentDate={currentDate} loggedIn={initialData.authenticated} />
-          <MainWeek date={currentDate} setDate={setCurrentDate} events={events} loading={loading} mutations={mutations} />
+          <MainWeek
+            date={currentDate}
+            setDate={setCurrentDate}
+            events={events}
+            loading={loading}
+            mutations={mutations}
+            calendars={calendars.calendars}
+          />
         </main>
       </div>
     </VimProvider>

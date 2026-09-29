@@ -7,9 +7,8 @@ import { Fragment } from 'preact/jsx-runtime';
 import TimeSlot from '@/components/Timeslot';
 import EventBlock from '@/components/EventBlock';
 import DraftBlock from '@/components/DraftBlock';
-import { DEFAULT_CALENDAR_ID } from '@/hooks/useEvents';
 
-import type { Event } from "@nvcal/domain";
+import type { Calendar, Event } from "@nvcal/domain";
 import type { DraftEvent } from "@/types/ui";
 import type { EventMutations } from '@/hooks/useEvents';
 
@@ -19,6 +18,7 @@ interface MainWeekProps {
   events: Event[];
   loading: boolean;
   mutations: EventMutations;
+  calendars: Calendar[];
 }
 
 
@@ -104,12 +104,13 @@ function toDatetimeLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function MainWeek({ date, setDate, events, loading, mutations }: MainWeekProps) {
+export function MainWeek({ date, setDate, events, loading, mutations, calendars }: MainWeekProps) {
   const weekDays = getWeekDays(date);
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   const [draft, setDraft] = useState<DraftEvent | null>(null);
   const [triggerNode, setTriggerNode] = useState<HTMLElement | null>(null);
+  const [calendarError, setCalendarError] = useState('');
   const vimContext = useContext(VimContext);
   const [dialogSide, setDialogSide] = useState<'left' | 'right'>('right');
 
@@ -171,10 +172,21 @@ export function MainWeek({ date, setDate, events, loading, mutations }: MainWeek
 
   const handleSlotInteract = (trigger: HTMLElement, day: Date, hour: number, dayIndex: number) => {
     setTriggerNode(trigger);
+    // Ignore stale, pre-import Google placeholders. Imported external calendars
+    // always have an external ID; locally created calendars are valid as well.
+    const calendar = calendars.find(({ is_external, external_calendar_id }) =>
+      !is_external || external_calendar_id != null
+    );
+    if (!calendar) {
+      setCalendarError('Create/Import a calendar before creating an event.');
+      return;
+    }
+
+    setCalendarError('');
     const newDate = new Date(day);
     newDate.setHours(hour);
     setDate(newDate);
-    setDraft({ dayIndex, hour, duration: 1, date: newDate, calendarId: DEFAULT_CALENDAR_ID });
+    setDraft({ dayIndex, hour, duration: 1, date: newDate, calendarId: calendar.id });
   };
 
   const handleEditEvent = (layout: EventLayout) => {
@@ -249,6 +261,8 @@ export function MainWeek({ date, setDate, events, loading, mutations }: MainWeek
 
   return (
     <div class={`week-container${loading ? ' is-fetching' : ''}`}>
+
+      {calendarError && <div class="auth-error">{calendarError}</div>}
 
       <VimDialog
         isOpen={!!draft}
