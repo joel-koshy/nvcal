@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import { api } from '@/utils/api';
 import type { Calendar, CalendarListResponse } from "@nvcal/domain";
 import type { ApiError } from '@/utils/api';
@@ -7,6 +7,7 @@ interface UseCalendarsReturn {
   calendars: Calendar[];
   loading: boolean;
   error: string | null;
+  refresh: () => Promise<void>;
 }
 
 export function useCalendars(initialCalendars?: Calendar[]): UseCalendarsReturn {
@@ -14,34 +15,29 @@ export function useCalendars(initialCalendars?: Calendar[]): UseCalendarsReturn 
   const [loading, setLoading] = useState(initialCalendars == undefined);
   const [error, setError] = useState<string | null>(null);
 
+  const refresh = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const res = await api<CalendarListResponse>('/api/calendars');
+      setCalendars(res.calendars);
+      setError(null);
+    } catch (err) {
+      const apiError = err as ApiError;
+      console.error('[useCalendars] Error:', apiError);
+      setError(apiError.message ?? 'Failed to fetch calendars');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (initialCalendars !== undefined) {
       return;
     }
 
-    let mounted = true;
-    setLoading(true);
+    void refresh();
+  }, [initialCalendars, refresh]);
 
-    api<CalendarListResponse>('/api/calendars')
-      .then((res) => {
-        if (mounted) {
-          setCalendars(res.calendars);
-          setError(null);
-          setLoading(false);
-        }
-      })
-      .catch((err: ApiError) => {
-        if (mounted) {
-          console.error('[useCalendars] Error:', err)
-          setError(err.message ?? 'Failed to fetch calendars');
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [initialCalendars]);
-
-  return { calendars, loading, error };
+  return { calendars, loading, error, refresh };
 }

@@ -64,19 +64,12 @@ googleAuth.get('/callback', async (c) => {
 	let userId = user?.id;
 	if (!userId) {
 		userId = crypto.randomUUID();
-		// default calendar
-		const defaultCalendarId = crypto.randomUUID();
-
-		await c.env.DB.batch([
-			c.env.DB.prepare(
-				`INSERT INTO users (id, email, created_at)
-				VALUES (?, ?, ?)`
-			).bind(userId, googleUser.email, new Date().toISOString()),
-			c.env.DB.prepare(
-				`INSERT INTO calendars (id, user_id, name, is_external, external_provider)
-				VALUES (?, ?, ?, 1, 'google')`
-			).bind(defaultCalendarId, userId, 'Primary')
-		]);
+		// A Google sign-in authorizes access, but does not import any calendars.
+		// Users choose the Google calendars to import from the calendar sidebar.
+		await c.env.DB.prepare(
+			`INSERT INTO users (id, email, created_at)
+			VALUES (?, ?, ?)`
+		).bind(userId, googleUser.email, new Date().toISOString()).run();
 	}
 
 	// Save Token

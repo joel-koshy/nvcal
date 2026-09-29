@@ -168,11 +168,12 @@ interface SidebarCalendarsProps {
   calendars: Calendar[];
   loading: boolean;
   error: string | null;
+  onCalendarsChanged: () => Promise<void>;
 }
 
 type CreateTab = 'create' | 'import';
 
-export function SidebarCalendars({ calendars, loading }: SidebarCalendarsProps) {
+export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: SidebarCalendarsProps) {
   const vimContext = useContext(VimContext);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
@@ -252,6 +253,7 @@ export function SidebarCalendars({ calendars, loading }: SidebarCalendarsProps) 
 
     try {
       await api<ApiResponse<'/api/calendars POST'>>('/api/calendars', 'POST', body);
+      await onCalendarsChanged();
       closeCreate();
     } catch (err: any) {
       setCreateError(err.message ?? 'Failed to create calendar');
@@ -273,6 +275,7 @@ export function SidebarCalendars({ calendars, loading }: SidebarCalendarsProps) 
       await api<ApiResponse<'/api/sync/google/import POST'>>('/api/sync/google/import', 'POST', {
         googleCalendarIds: [...selectedImportIds],
       });
+      await onCalendarsChanged();
       closeCreate();
     } catch (err: any) {
       setCreateError(err.message ?? 'Import failed');

@@ -6,9 +6,6 @@ import type { Event, CreateEventInput, UpdateEventInput } from "@nvcal/domain";
 import type { ApiResponse } from '@/types/api';
 
 
-// TODO: Replace with real calendar ID from user's calendars
-export const DEFAULT_CALENDAR_ID = 'cal_001';
-
 export interface EventMutations {
   createEvent(req: CreateEventInput): Promise<Event>;
   updateEvent(id: string, req: UpdateEventInput): Promise<Event>;
