@@ -20,7 +20,7 @@
     "@types/node": "^25.8.0",
     "typescript": "^5.5.2",
     "vitest": "^4.1.8",
-    "wrangler": "^4.92.0"
+    "wrangler": "^4.143.0"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.8.0",

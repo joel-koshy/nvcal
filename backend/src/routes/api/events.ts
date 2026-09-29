@@ -87,7 +87,7 @@ eventsRouter.post("/", zValidator("json", CreateEventSchema), async (c) => {
 			},
 			action: JobAction.EXPORT_EVENT
 		}
-		c.env.SYNC_QUEUE.send(job);
+		await c.env.SYNC_QUEUE.send(job);
 		return typedJson(c, EventResponseSchema, { event }, 202);
 	}
 
@@ -185,7 +185,7 @@ eventsRouter.put("/:id", zValidator("json", UpdateEventSchema), async (c) => {
 			},
 			action: JobAction.EXPORT_EVENT
 		}
-		c.env.SYNC_QUEUE.send(job);
+		await c.env.SYNC_QUEUE.send(job);
 		return typedJson(c, EventResponseSchema, { event: updatedEvent }, 202);
 	}
 
@@ -240,7 +240,7 @@ eventsRouter.delete("/:id", zValidator("query", DeleteSchema), async (c) => {
 				},
 				action: JobAction.EXPORT_EVENT
 			}
-			c.env.SYNC_QUEUE.send(job);
+			await c.env.SYNC_QUEUE.send(job);
 		}
 		return c.body(null, 204);
 	}
