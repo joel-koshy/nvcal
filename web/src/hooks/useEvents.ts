@@ -21,7 +21,10 @@ export interface EventMutations {
 export function useEvents(date: Date, initial: Event[]) {
   const [events, setEvents] = useState(initial);
   const [loading, setLoading] = useState(false);
-  const prevWindow = useRef('');
+  const initialWeek = getWeekDays(date);
+  const prevWindow = useRef(
+    initialWeek[0].toISOString() + '|' + initialWeek[6].toISOString()
+  );
   const reqId = useRef(0);
 
   useEffect(() => {
