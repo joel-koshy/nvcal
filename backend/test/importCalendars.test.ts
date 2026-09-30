@@ -24,8 +24,8 @@ const GOOGLE_EVENTS_RESPONSE = {
 			id: 'gcal-event-001',
 			summary: 'Team Standup',
 			status: 'confirmed',
-			start: { dateTime: '2026-06-28T09:00:00Z' },
-			end: { dateTime: '2026-06-28T09:30:00Z' },
+			start: { dateTime: '2026-06-28T05:00:00-04:00' },
+			end: { dateTime: '2026-06-28T05:30:00-04:00' },
 		},
 		{
 			id: 'gcal-event-002',
@@ -184,7 +184,7 @@ describe('Queue: importExternalCalendars (Google)', () => {
 
 			// ── Verify DB inserts ────────────────────────────────────────
 			const { results } = await env.DB.prepare(
-				`SELECT external_event_id, title
+				`SELECT external_event_id, title, start_time, end_time, is_all_day
 				 FROM events
 				 WHERE calendar_id = ?`
 			).bind(LOCAL_CAL_ID).all();
@@ -202,6 +202,19 @@ describe('Queue: importExternalCalendars (Google)', () => {
 			expect(titles).toContain('Team Standup');
 			expect(titles).toContain('Lunch Break');
 			expect(titles).toContain('Untitled');
+
+			const timedEvent = results.find((event) => event.external_event_id === 'gcal-event-001');
+			expect(timedEvent).toMatchObject({
+				start_time: '2026-06-28T09:00:00.000Z',
+				end_time: '2026-06-28T09:30:00.000Z',
+				is_all_day: 0,
+			});
+			const allDayEvent = results.find((event) => event.external_event_id === 'gcal-event-002');
+			expect(allDayEvent).toMatchObject({
+				start_time: '2026-06-28T00:00:00.000Z',
+				end_time: '2026-06-29T00:00:00.000Z',
+				is_all_day: 1,
+			});
 
 			// ── Verify sync_token was saved ──────────────────────────────
 			const syncToken = await getSyncToken();

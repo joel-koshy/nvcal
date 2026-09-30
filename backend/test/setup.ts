@@ -5,9 +5,10 @@ import usersAndOauth from "../db/migrations/0001_users_and_oauth.sql?raw";
 import calendars from "../db/migrations/0002_calendars.sql?raw";
 import tasks from "../db/migrations/0003_tasks.sql?raw";
 import events from "../db/migrations/0004_events.sql?raw";
+import normalizeEventTimestamps from "../db/migrations/0005_normalize_event_timestamps.sql?raw";
 
 export async function applySchema() {
-	const migrationSql = [usersAndOauth, calendars, tasks, events].join('\n');
+	const migrationSql = [usersAndOauth, calendars, tasks, events, normalizeEventTimestamps].join('\n');
 	const sql = `${resetSql}\n${migrationSql}`;
 
 	// Strip all SQL comments (-- style) before splitting statements for D1.

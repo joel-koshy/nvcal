@@ -196,8 +196,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 200px;
+  max-height: 12rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .import-item {

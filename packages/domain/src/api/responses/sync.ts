@@ -6,6 +6,7 @@ export const GoogleCalendarItemSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   color: z.string().optional(),
+  timezone: z.string().optional(),
 });
 export type GoogleCalendarItem = z.output<typeof GoogleCalendarItemSchema>;
 

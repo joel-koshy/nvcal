@@ -5,7 +5,7 @@ import { VimContext } from '@/hooks/vim/VimProvider';
 import { VimDialog, VimFormRow } from '@/components/DialogBox';
 import { api } from '@/utils/api';
 import { MOCK_GOOGLE_CALENDARS } from '@/mock/events';
-import type { Calendar, CreateCalendarInput, GoogleCalendarItem } from "@nvcal/domain";
+import type { Calendar, CreateCalendarInput, GoogleCalendarItem, ImportGoogleCalendarInput } from "@nvcal/domain";
 import type { ApiResponse } from '@/types/api';
 
 // Presets mirror the mock calendars' palette (Rose/Sky/Pink) plus two matching
@@ -54,12 +54,14 @@ interface ColorSelectorProps {
   colors: readonly string[];
   selected: string;
   onSelect: (color: string) => void;
+  disabled?: boolean;
 }
 
-function ColorSelector({ colors, selected, onSelect }: ColorSelectorProps) {
+function ColorSelector({ colors, selected, onSelect, disabled = false }: ColorSelectorProps) {
   const vimRef = useNavigable<HTMLDivElement>('create-calendar');
 
   const cycle = (dir: 1 | -1) => {
+    if (disabled) return;
     const idx = colors.indexOf(selected);
     const next = (idx + dir + colors.length) % colors.length;
     onSelect(colors[next]);
@@ -87,6 +89,7 @@ function ColorSelector({ colors, selected, onSelect }: ColorSelectorProps) {
               tabIndex={-1}
               class={`color-swatch ${color === selected ? 'selected' : ''}`}
               style={{ background: color }}
+              disabled={disabled}
               onClick={() => {
                 onSelect(color);
                 // keep the vim cursor on the row after a mouse pick
@@ -103,22 +106,22 @@ function ColorSelector({ colors, selected, onSelect }: ColorSelectorProps) {
 
 interface ImportItemProps {
   item: GoogleCalendarItem;
-  checked: boolean;
-  onToggle: () => void;
+  selected: boolean;
+  onSelect: () => void;
 }
 
-function ImportItem({ item, checked, onToggle }: ImportItemProps) {
+function ImportItem({ item, selected, onSelect }: ImportItemProps) {
   const vimRef = useNavigable<HTMLButtonElement>('create-calendar');
 
   return (
     <button
       type="button"
       ref={vimRef}
-      class={`import-item ${checked ? 'checked' : ''}`}
-      onClick={onToggle}
+      class={`import-item ${selected ? 'checked' : ''}`}
+      onClick={onSelect}
       style={{ '--calendar-color': item.color ?? '#6c7086' }}
     >
-      <span class="import-check">{checked ? '✓' : ''}</span>
+      <span class="import-check">{selected ? '✓' : ''}</span>
       <span class="calendar-color-indicator"></span>
       <span class="calendar-name">{item.name}</span>
     </button>
@@ -183,7 +186,10 @@ export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: Sid
   const [discoverable, setDiscoverable] = useState<GoogleCalendarItem[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [importFetched, setImportFetched] = useState(false);
-  const [selectedImportIds, setSelectedImportIds] = useState<ReadonlySet<string>>(new Set());
+  const [selectedImportId, setSelectedImportId] = useState<string | null>(null);
+  const [importName, setImportName] = useState('');
+  const [importTimezone, setImportTimezone] = useState('');
+  const [importColor, setImportColor] = useState(CALENDAR_PRESET_COLORS[0]);
 
   // Auto-detect the user's own timezone for the selector's default value.
   const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
@@ -218,7 +224,10 @@ export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: Sid
     setCreateError('');
     setSelectedColor(CALENDAR_PRESET_COLORS[0]);
     setTab('create');
-    setSelectedImportIds(new Set());
+    setSelectedImportId(null);
+    setImportName('');
+    setImportTimezone(detectedTimezone);
+    setImportColor(CALENDAR_PRESET_COLORS[0]);
     vimContext?.setActivePane('create-calendar');
     setTimeout(() => {
       (document.querySelector('#create-calendar-dialog input') as HTMLElement | null)?.focus();
@@ -260,21 +269,30 @@ export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: Sid
     }
   };
 
-  const toggleImport = (id: string) => {
-    setSelectedImportIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const selectImport = (item: GoogleCalendarItem) => {
+    if (selectedImportId === item.id) {
+      setSelectedImportId(null);
+      return;
+    }
+
+    setSelectedImportId(item.id);
+    setImportName(item.name);
+    setImportTimezone(item.timezone || detectedTimezone);
+    setImportColor(item.color || CALENDAR_PRESET_COLORS[0]);
   };
 
-  const handleImport = async () => {
-    if (selectedImportIds.size === 0) return;
+  const handleImport = async (e?: SubmitEvent) => {
+    e?.preventDefault();
+    if (!selectedImportId || !importName.trim()) return;
+    setCreateError('');
+    const body: ImportGoogleCalendarInput = {
+      googleCalendarId: selectedImportId,
+      name: importName.trim(),
+      timezone: importTimezone.trim() || 'UTC',
+      color_hex: importColor,
+    };
     try {
-      await api<ApiResponse<'/api/sync/google/import POST'>>('/api/sync/google/import', 'POST', {
-        googleCalendarIds: [...selectedImportIds],
-      });
+      await api<ApiResponse<'/api/sync/google/import POST'>>('/api/sync/google/import', 'POST', body);
       await onCalendarsChanged();
       closeCreate();
     } catch (err: any) {
@@ -318,7 +336,7 @@ export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: Sid
         id="create-calendar-dialog"
         paneName="create-calendar"
         onClose={closeCreate}
-        onSubmit={handleCreate}
+        onSubmit={tab === 'create' ? handleCreate : handleImport}
       >
         <VimFormRow
           paneName="create-calendar"
@@ -371,13 +389,13 @@ export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: Sid
             {importLoading ? (
               <div class="calendars-loading">Loading...</div>
             ) : (
-              <div class="import-list">
+              <div class="import-list" aria-label="Google calendars">
                 {discoverable.map((item) => (
                   <ImportItem
                     key={item.id}
                     item={item}
-                    checked={selectedImportIds.has(item.id)}
-                    onToggle={() => toggleImport(item.id)}
+                    selected={selectedImportId === item.id}
+                    onSelect={() => selectImport(item)}
                   />
                 ))}
                 {discoverable.length === 0 && (
@@ -386,14 +404,47 @@ export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: Sid
               </div>
             )}
 
+            <VimFormRow paneName="create-calendar">
+              <label>Name</label>
+              <input
+                name="import-name"
+                type="text"
+                value={importName}
+                onInput={(e) => setImportName(e.currentTarget.value)}
+                placeholder="Select a calendar"
+                disabled={!selectedImportId}
+                required
+              />
+            </VimFormRow>
+
+            <VimFormRow paneName="create-calendar">
+              <label>Timezone</label>
+              <input
+                name="import-timezone"
+                type="text"
+                value={importTimezone}
+                onInput={(e) => setImportTimezone(e.currentTarget.value)}
+                disabled={!selectedImportId}
+              />
+            </VimFormRow>
+
+            <ColorSelector
+              colors={importColor && !CALENDAR_PRESET_COLORS.includes(importColor)
+                ? [...CALENDAR_PRESET_COLORS, importColor]
+                : CALENDAR_PRESET_COLORS}
+              selected={importColor}
+              onSelect={setImportColor}
+              disabled={!selectedImportId}
+            />
+
             {createError && <div class="auth-error">{createError}</div>}
 
             <VimFormRow paneName="create-calendar">
               <button
                 class="save-btn"
                 type="button"
-                onClick={handleImport}
-                disabled={selectedImportIds.size === 0}
+                onClick={() => { void handleImport(); }}
+                disabled={!selectedImportId || !importName.trim()}
               >
                 Import
               </button>

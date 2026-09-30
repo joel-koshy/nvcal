@@ -1,11 +1,10 @@
 import { Hono } from "hono";
 import type { Bindings, Variables } from "../../../types"
 import { getValidTokenGoogle } from "../../../util/oauth";
-import z from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { Job, JobAction, Providers } from "../../../queue";
+import { JobAction, Providers } from "../../../queue";
 import { typedJson } from "../../../util/typed";
-import { GoogleCalendarListResponseSchema } from "@nvcal/domain";
+import { GoogleCalendarListResponseSchema, ImportGoogleCalendarSchema } from "@nvcal/domain";
 
 interface GoogleCalendarListResponse {
 	items: Array<{
@@ -13,6 +12,7 @@ interface GoogleCalendarListResponse {
 		summary: string;
 		description?: string;
 		backgroundColor?: string;
+		timeZone?: string;
 	}>;
 }
 
@@ -33,45 +33,51 @@ googleSyncRouter.get('/calendars', async (c) => {
 		id: cal.id,
 		name: cal.summary,
 		description: cal.description || "",
-		color: cal.backgroundColor
+		color: cal.backgroundColor,
+		timezone: cal.timeZone,
 	}));
 
 	return typedJson(c, GoogleCalendarListResponseSchema, { calendars: availableCalendars });
 })
 
 
-const importRequestSchema = z.object({
-	googleCalendarIds: z.array(z.string()).min(1)
-})
-googleSyncRouter.post('/import', zValidator('json', importRequestSchema), async (c) => {
+googleSyncRouter.post('/import', zValidator('json', ImportGoogleCalendarSchema), async (c) => {
 	const userId = c.get("userId");
-	const { googleCalendarIds } = c.req.valid('json');
+	const { googleCalendarId, name, color_hex, timezone } = c.req.valid('json');
+	const existing = await c.env.DB
+		.prepare(`SELECT id FROM calendars WHERE user_id = ? AND external_calendar_id = ?`)
+		.bind(userId, googleCalendarId)
+		.first<{ id: string }>();
+	const localCalendarId = existing?.id ?? crypto.randomUUID();
 
-	const batchUpserts = []
-	const qJobs: Job[] = []
-	for (const googleCalId of googleCalendarIds) {
-		const localCalendarId = crypto.randomUUID();
-		batchUpserts.push(
-			c.env.DB.prepare(`
-				INSERT INTO calendars (id, user_id, name, is_external, external_provider, external_calendar_id)
-				VALUES (?, ?, ?, 1, 'google', ? )
-				ON CONFLICT (external_calendar_id) DO UPDATE SET external_provider = 'google'
-			`).bind(localCalendarId, userId, "TO BE CHANGED", googleCalId)
-		)
+	const { success } = existing
+		? await c.env.DB
+			.prepare(`
+				UPDATE calendars
+				SET name = ?, color_hex = ?, timezone = ?, external_provider = 'google'
+				WHERE id = ? AND user_id = ?
+			`)
+			.bind(name, color_hex, timezone, localCalendarId, userId)
+			.run()
+		: await c.env.DB
+			.prepare(`
+				INSERT INTO calendars (id, user_id, name, color_hex, timezone, is_external, external_provider, external_calendar_id)
+				VALUES (?, ?, ?, ?, ?, 1, 'google', ?)
+			`)
+			.bind(localCalendarId, userId, name, color_hex, timezone, googleCalendarId)
+			.run();
 
-		qJobs.push({
-			action: JobAction.IMPORT_CAL,
-			payload: {
-				provider: Providers.GOOGLE,
-				userId: userId,
-				localCalendarId: localCalendarId,
-				externalCalendarId: googleCalId
-			}
-		});
-	}
+	if (!success) return c.json({ error: "Failed to create calendar" }, 500);
 
-	await c.env.DB.batch(batchUpserts);
-	await Promise.all(qJobs.map((job) => c.env.SYNC_QUEUE.send(job)));
+	await c.env.SYNC_QUEUE.send({
+		action: JobAction.IMPORT_CAL,
+		payload: {
+			provider: Providers.GOOGLE,
+			userId,
+			localCalendarId,
+			externalCalendarId: googleCalendarId,
+		},
+	});
 
 	return new Response(null, { status: 202 });
 })

@@ -56,6 +56,7 @@ const GOOGLE_CALENDAR_LIST_RESPONSE = {
 			summary: 'Primary Calendar',
 			description: 'My main calendar',
 			backgroundColor: '#039BE5',
+			timeZone: 'America/New_York',
 		},
 		{
 			id: GOOGLE_CAL_ID_2,
@@ -101,6 +102,7 @@ describe('Route: GET /sync/google/calendars', () => {
 					name: 'Primary Calendar',
 					description: 'My main calendar',
 					color: '#039BE5',
+					timezone: 'America/New_York',
 				}),
 				expect.objectContaining({
 					id: GOOGLE_CAL_ID_2,
@@ -157,7 +159,7 @@ describe('Route: POST /sync/google/import', () => {
 		env.SYNC_QUEUE = { send: sendSpy, get: vi.fn(), createBatch: vi.fn() } as any;
 	});
 
-	it('should create local calendar records and enqueue import jobs (returns 202)', async () => {
+	it('should create one named local calendar and enqueue its import job (returns 202)', async () => {
 		const res = await app.request('/sync/google/import', {
 			method: 'POST',
 			headers: {
@@ -165,7 +167,10 @@ describe('Route: POST /sync/google/import', () => {
 				Cookie: authCookie,
 			},
 			body: JSON.stringify({
-				googleCalendarIds: [GOOGLE_CAL_ID_1, GOOGLE_CAL_ID_2],
+				googleCalendarId: GOOGLE_CAL_ID_1,
+				name: 'Renamed Primary',
+				color_hex: '#039BE5',
+				timezone: 'America/New_York',
 			}),
 		}, env);
 
@@ -173,18 +178,21 @@ describe('Route: POST /sync/google/import', () => {
 
 		// ── Verify DB inserts ──────────────────────────────────────────
 		const { results } = await env.DB.prepare(
-			`SELECT external_calendar_id, external_provider
+			`SELECT external_calendar_id, external_provider, name, color_hex, timezone
 			 FROM calendars
 			 WHERE user_id = ? AND external_provider = 'google'`
 		).bind(TEST_USER_ID).all();
 
-		expect(results.length).toBe(2);
-		const externalIds = results.map(r => r.external_calendar_id);
-		expect(externalIds).toContain(GOOGLE_CAL_ID_1);
-		expect(externalIds).toContain(GOOGLE_CAL_ID_2);
+		expect(results).toEqual([expect.objectContaining({
+			external_calendar_id: GOOGLE_CAL_ID_1,
+			external_provider: 'google',
+			name: 'Renamed Primary',
+			color_hex: '#039BE5',
+			timezone: 'America/New_York',
+		})]);
 
 		// ── Verify queue jobs were enqueued ────────────────────────────
-		expect(sendSpy).toHaveBeenCalledTimes(2);
+		expect(sendSpy).toHaveBeenCalledTimes(1);
 
 		const jobPayloads = sendSpy.mock.calls.map(
 			(call: any[]) => call[0]
@@ -198,43 +206,24 @@ describe('Route: POST /sync/google/import', () => {
 			expect(job.payload.externalCalendarId).toBeDefined();
 		}
 
-		// Verify each enqueued job maps to one of the requested Google calendars
-		const enqueuedExternalIds = jobPayloads.map(
-			(j: any) => j.payload.externalCalendarId
-		);
-		expect(enqueuedExternalIds).toContain(GOOGLE_CAL_ID_1);
-		expect(enqueuedExternalIds).toContain(GOOGLE_CAL_ID_2);
+		expect(jobPayloads[0].payload.externalCalendarId).toBe(GOOGLE_CAL_ID_1);
 	});
 
-	it('should reject empty googleCalendarIds array (Zod validation)', async () => {
+	it('should reject a missing import name (Zod validation)', async () => {
 		const res = await app.request('/sync/google/import', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				Cookie: authCookie,
 			},
-			body: JSON.stringify({ googleCalendarIds: [] }),
+			body: JSON.stringify({ googleCalendarId: GOOGLE_CAL_ID_1 }),
 		}, env);
 
 		expect(res.status).toBe(400);
 		expect(sendSpy).not.toHaveBeenCalled();
 	});
 
-	it('should reject missing googleCalendarIds field', async () => {
-		const res = await app.request('/sync/google/import', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Cookie: authCookie,
-			},
-			body: JSON.stringify({}),
-		}, env);
-
-		expect(res.status).toBe(400);
-		expect(sendSpy).not.toHaveBeenCalled();
-	});
-
-	it('should handle duplicate calendar IDs (dedup into calendars table)', async () => {
+	it('should reject a multi-calendar legacy request', async () => {
 		const res = await app.request('/sync/google/import', {
 			method: 'POST',
 			headers: {
@@ -242,21 +231,64 @@ describe('Route: POST /sync/google/import', () => {
 				Cookie: authCookie,
 			},
 			body: JSON.stringify({
-				googleCalendarIds: [GOOGLE_CAL_ID_1, GOOGLE_CAL_ID_1],
+				googleCalendarIds: [GOOGLE_CAL_ID_1, GOOGLE_CAL_ID_2],
+				name: 'Work',
+			}),
+		}, env);
+
+		expect(res.status).toBe(400);
+		expect(sendSpy).not.toHaveBeenCalled();
+	});
+
+	it('should update the local configuration when importing the same calendar again', async () => {
+		const first = await app.request('/sync/google/import', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Cookie: authCookie,
+			},
+			body: JSON.stringify({
+				googleCalendarId: GOOGLE_CAL_ID_1,
+				name: 'Original Work',
+				color_hex: '#039BE5',
+				timezone: 'America/New_York',
+			}),
+		}, env);
+		expect(first.status).toBe(202);
+		const original = await env.DB.prepare(
+			`SELECT id FROM calendars WHERE user_id = ? AND external_calendar_id = ?`
+		).bind(TEST_USER_ID, GOOGLE_CAL_ID_1).first<{ id: string }>();
+
+		const res = await app.request('/sync/google/import', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Cookie: authCookie,
+			},
+			body: JSON.stringify({
+				googleCalendarId: GOOGLE_CAL_ID_1,
+				name: 'Updated Work',
+				color_hex: '#616161',
+				timezone: 'UTC',
 			}),
 		}, env);
 
 		expect(res.status).toBe(202);
 
-		// DB deduplicates via ON CONFLICT, so only 1 calendar row
+		// Re-importing retains the local ID and updates its user-selected configuration.
 		const { results } = await env.DB.prepare(
-			`SELECT external_calendar_id
+			`SELECT id, external_calendar_id, name, color_hex, timezone
 			 FROM calendars
 			 WHERE user_id = ? AND external_calendar_id = ?`
 		).bind(TEST_USER_ID, GOOGLE_CAL_ID_1).all();
-		expect(results.length).toBe(1);
+		expect(results).toEqual([expect.objectContaining({
+			id: original?.id,
+			external_calendar_id: GOOGLE_CAL_ID_1,
+			name: 'Updated Work',
+			color_hex: '#616161',
+			timezone: 'UTC',
+		})]);
 
-		// But 2 jobs are still enqueued (one per requested ID)
 		expect(sendSpy).toHaveBeenCalledTimes(2);
 	});
 });

@@ -130,12 +130,15 @@ Fetches the list of Google Calendars accessible to the authenticated user. Used 
 
 ### `POST /sync/google/import`
 
-Initiates import of one or more Google Calendars. Creates local calendar entries and queues background jobs to fetch events.
+Initiates import of one Google Calendar. Creates a local calendar entry and queues a background job to fetch events.
 
 **Request Body:**
 ```json
 {
-  "googleCalendarIds": ["calendar-id-1", "calendar-id-2"]  // Required: Non-empty array
+  "googleCalendarId": "calendar-id-1",
+  "name": "Work",
+  "color_hex": "#039BE5",
+  "timezone": "America/New_York"
 }
 ```
 

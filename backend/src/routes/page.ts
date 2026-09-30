@@ -5,6 +5,7 @@ import { PageStateSchema } from '@nvcal/domain';
 import type { Bindings, Variables } from '../types';
 import { JwtPayload } from '../types';
 import { template } from "../generated/template"
+import { normalizeStoredEventTimes } from '../util/eventTime';
 
 const pageRouter = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
@@ -58,7 +59,7 @@ pageRouter.get('/', async (c) => {
 			`)
 			.bind(userId, start, end)
 			.all();
-		events = result.results;
+		events = result.results.map(normalizeStoredEventTimes);
 
 		const calResult = await c.env.DB
 			.prepare(`

@@ -400,8 +400,8 @@ describe('Queue: processGoogleWebhook', () => {
 							status: 'confirmed',
 							summary: 'New Event from Webhook',
 							description: 'Webhook triggered update',
-							start: { dateTime: '2026-06-28T10:00:00Z' },
-							end: { dateTime: '2026-06-28T11:00:00Z' },
+							start: { dateTime: '2026-06-28T06:00:00-04:00' },
+							end: { dateTime: '2026-06-28T07:00:00-04:00' },
 						},
 						{
 							id: 'gcal-delta-002',
@@ -421,7 +421,7 @@ describe('Queue: processGoogleWebhook', () => {
 			);
 
 			const { results } = await env.DB.prepare(
-				`SELECT external_event_id, title, is_all_day, description
+				`SELECT external_event_id, title, is_all_day, description, start_time, end_time
 				 FROM events WHERE calendar_id = ?`
 			).bind(TEST_CALENDAR_ID).all();
 
@@ -432,11 +432,15 @@ describe('Queue: processGoogleWebhook', () => {
 			expect(ev1!.title).toBe('New Event from Webhook');
 			expect(ev1!.description).toBe('Webhook triggered update');
 			expect(ev1!.is_all_day).toBe(0);
+			expect(ev1!.start_time).toBe('2026-06-28T10:00:00.000Z');
+			expect(ev1!.end_time).toBe('2026-06-28T11:00:00.000Z');
 
 			const ev2 = results.find(r => r.external_event_id === 'gcal-delta-002');
 			expect(ev2).toBeDefined();
 			expect(ev2!.title).toBe('All-Day Event');
 			expect(ev2!.is_all_day).toBe(1);
+			expect(ev2!.start_time).toBe('2026-06-28T00:00:00.000Z');
+			expect(ev2!.end_time).toBe('2026-06-29T00:00:00.000Z');
 
 			const cal = await env.DB.prepare(
 				`SELECT sync_token FROM calendars WHERE id = ?`
