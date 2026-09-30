@@ -380,7 +380,10 @@ export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: Sid
 
             {createError && <div class="auth-error">{createError}</div>}
 
-            <VimFormRow paneName="create-calendar">
+            <VimFormRow
+              paneName="create-calendar"
+              onClickAction={() => (document.getElementById('create-calendar-dialog') as HTMLFormElement | null)?.requestSubmit()}
+            >
               <button class="save-btn" type="submit">Create</button>
             </VimFormRow>
           </>
@@ -439,7 +442,10 @@ export function SidebarCalendars({ calendars, loading, onCalendarsChanged }: Sid
 
             {createError && <div class="auth-error">{createError}</div>}
 
-            <VimFormRow paneName="create-calendar">
+            <VimFormRow
+              paneName="create-calendar"
+              onClickAction={() => { void handleImport(); }}
+            >
               <button
                 class="save-btn"
                 type="button"
