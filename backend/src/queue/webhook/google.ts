@@ -1,6 +1,7 @@
 import { ImportJobPayload, JobAction, ProcessWebhookPayload, Providers, SetupWebhookPayload } from "..";
 import type { Bindings } from "../../types";
 import { getValidTokenGoogle } from "../../util/oauth";
+import { normalizeGoogleEventTimes } from "../../util/eventTime";
 
 interface GoogleWatchResponse {
 	resourceId: string;
@@ -135,9 +136,7 @@ export async function processGoogleWebhook(job: ProcessWebhookPayload, env: Bind
 		if (item.status === 'cancelled') {
 			await env.DB.prepare(`DELETE FROM events WHERE external_event_id = ?`).bind(item.id).run();
 		} else {
-			const startTime = item.start.dateTime || item.start.date;
-			const endTime = item.end.dateTime || item.end.date;
-			const isAllDay = item.start.date ? 1 : 0;
+			const times = normalizeGoogleEventTimes(item.start, item.end);
 			const eventId = crypto.randomUUID();
 
 			batchStatements.push(
@@ -156,17 +155,17 @@ export async function processGoogleWebhook(job: ProcessWebhookPayload, env: Bind
                     WHERE
                         events.title != excluded.title OR
                         IFNULL(events.description, '') != IFNULL(excluded.description, '') OR
-                        events.start_time != excluded.start_time OR
-                        events.end_time != excluded.end_time OR
+                        strftime('%Y-%m-%dT%H:%M:%fZ', events.start_time) != excluded.start_time OR
+                        strftime('%Y-%m-%dT%H:%M:%fZ', events.end_time) != excluded.end_time OR
                         events.is_all_day != excluded.is_all_day;
                     `).bind(
 					eventId,
 					calData.id,
 					item.summary || 'Untitled Event',
 					item.description || null,
-					startTime,
-					endTime,
-					isAllDay,
+					times.start_time,
+					times.end_time,
+					times.is_all_day,
 					item.id
 				)
 			);

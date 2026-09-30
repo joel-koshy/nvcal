@@ -3,6 +3,7 @@ export * from "./entities/calendar";
 export * from "./entities/task";
 export * from "./api/events";
 export * from "./api/calendars";
+export * from "./api/sync";
 export * from "./api/auth";
 export * from "./api/responses/common";
 export * from "./api/responses/auth";

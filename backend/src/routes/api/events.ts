@@ -5,6 +5,7 @@ import { CreateEventSchema, TimeWindowSchema, UpdateEventSchema, EventListRespon
 import type { Bindings, Variables } from '../../types';
 import { JobAction, Providers, type Job } from '../../queue';
 import { typedJson } from '../../util/typed';
+import { normalizeStoredEventTimes } from '../../util/eventTime';
 
 const eventsRouter = new Hono<{ Bindings: Bindings, Variables: Variables }>();
 
@@ -31,7 +32,7 @@ eventsRouter.get("/", zValidator('query', TimeWindowSchema), async (c) => {
 		return c.json({ error: "Database Error" }, 500);
 	}
 
-	return typedJson(c, EventListResponseSchema, { events: results }, 200);
+	return typedJson(c, EventListResponseSchema, { events: results.map(normalizeStoredEventTimes) }, 200);
 })
 
 
