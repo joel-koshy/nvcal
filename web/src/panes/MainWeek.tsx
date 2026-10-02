@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useMemo } from 'preact/hooks';
+import { useState, useEffect, useContext, useMemo, useRef } from 'preact/hooks';
 import { getWeekDays } from '@/utils/date.ts';
 import { VimDialog, VimFormRow } from '@/components/DialogBox';
 import { usePane } from '@/hooks/vim/usePane';
@@ -108,11 +108,31 @@ export function MainWeek({ date, setDate, events, loading, mutations, calendars 
   const weekDays = getWeekDays(date);
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
+  const [now, setNow] = useState(() => new Date());
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const todayIndicatorRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<DraftEvent | null>(null);
   const [triggerNode, setTriggerNode] = useState<HTMLElement | null>(null);
   const [calendarError, setCalendarError] = useState('');
   const vimContext = useContext(VimContext);
   const [dialogSide, setDialogSide] = useState<'left' | 'right'>('right');
+  const todayIndex = weekDays.findIndex(day => day.toDateString() === now.toDateString());
+  const minutesToday = now.getHours() * 60 + now.getMinutes();
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const indicator = todayIndicatorRef.current;
+    if (!viewport || !indicator) return;
+
+    viewport.scrollTop = indicator.offsetTop
+      + (indicator.offsetParent as HTMLElement).offsetTop
+      - viewport.clientHeight / 2;
+  }, []);
 
 
   // kill draft upon leaving 
@@ -135,7 +155,8 @@ export function MainWeek({ date, setDate, events, loading, mutations, calendars 
   usePane('main', {
     cols: 7,
     flow: 'row',
-    neighbors: { left: 'sidebar', up: 'topbar' }
+    neighbors: { left: 'sidebar', up: 'topbar' },
+    entryIndex: todayIndex === -1 ? undefined : now.getHours() * 7 + todayIndex,
   });
 
   const layoutsByDay = useMemo(() => {
@@ -267,9 +288,11 @@ export function MainWeek({ date, setDate, events, loading, mutations, calendars 
       <VimDialog
         isOpen={!!draft}
         anchorId="draft-event-block"
+        anchorPositionKey={draft ? `${draft.dayIndex}:${draft.hour}:${draft.duration}` : undefined}
         id="draft-dialog"
         title={draft?.eventId ? `Edit: ${draft.originalEvent?.title}` : `New: ${draft?.date.toLocaleString([], { weekday: 'short', hour: 'numeric' })}`}
         onClose={closeDialog}
+        onReposition={setDialogSide}
         onSubmit={handleSubmit}
       >
         <VimFormRow>
@@ -331,7 +354,7 @@ export function MainWeek({ date, setDate, events, loading, mutations, calendars 
         )}
       </VimDialog>
 
-      <div class="grid-viewport">
+      <div ref={viewportRef} class="grid-viewport">
         <div class="week-grid">
           <div class="time-gutter-header"></div>
 
@@ -354,6 +377,20 @@ export function MainWeek({ date, setDate, events, loading, mutations, calendars 
             weekDays={weekDays}
             closeDialog={closeDialog}
           />
+
+          {todayIndex !== -1 && (
+            <div
+              class="today-column"
+              style={{ gridColumn: todayIndex + 2, gridRow: '2 / span 24' }}
+              aria-hidden="true"
+            >
+              <div
+                ref={todayIndicatorRef}
+                class="today-indicator"
+                style={{ top: `${minutesToday / 14.4}%` }}
+              />
+            </div>
+          )}
 
           {/* --- The Background Grid --- */}
           {hours.map(hour => (

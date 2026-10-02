@@ -5,11 +5,11 @@ import type { PaneConfig } from './VimProvider';
 export function usePane(name: string, config: PaneConfig){
   const context = useContext(VimContext); 
   if(!context) throw new Error('usePane must be used with a VimProvider'); 
-  const {cols, flow, neighbors} = config;
+  const {cols, flow, neighbors, entryIndex} = config;
   useEffect(() =>{
     context.registerPane(name, config); 
     return () => {
       context.unregisterPane(name); 
     };
-  }, [name,cols, flow, JSON.stringify(neighbors)])
+  }, [name, cols, flow, entryIndex, JSON.stringify(neighbors)])
 }

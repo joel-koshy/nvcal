@@ -9,6 +9,7 @@ export interface PaneConfig {
   cols: number; 
   neighbors: Partial<Record<Direction,string>>; 
   flow: Flow; 
+  entryIndex?: number;
 } 
 
 interface PaneData{
@@ -133,9 +134,12 @@ export function VimProvider({children, initialPane = 'main'}: VimProviderProps){
         if(targetPaneName && registry.current.has(targetPaneName)){
           console.log("Hit")
           setActivePane(targetPaneName); 
-          // TODO set to last selected node 
-          const targetNodes = getSortedNodes(registry.current.get(targetPaneName)!.nodes); 
-          if (targetNodes.length > 0) targetNodes[0].focus(); 
+          const targetPane = registry.current.get(targetPaneName)!;
+          const targetNodes = getSortedNodes(targetPane.nodes);
+          const entryNode = targetPane.config.entryIndex == null
+            ? targetNodes[0]
+            : targetNodes[targetPane.config.entryIndex];
+          (entryNode ?? targetNodes[0])?.focus();
         }
         return; 
       }
