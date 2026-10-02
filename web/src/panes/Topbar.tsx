@@ -247,7 +247,10 @@ export function Topbar({ currentDate, loggedIn: initialLoggedIn }: TopbarProps) 
 
         <hr style={{ width: '70%' }} />
 
-        <VimFormRow paneName="login-dialog">
+        <VimFormRow
+          paneName="login-dialog"
+          onClickAction={() => window.location.assign('/auth/google/login')}
+        >
           <a href="/auth/google/login" class="oauth-btn">Sign in with Google</a>
         </VimFormRow>
 
