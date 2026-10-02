@@ -358,6 +358,19 @@ body {
   row-gap: 0;
 }
 
+.today-column {
+  position: relative;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.today-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px solid #f38ba8;
+}
+
 .draft-block {
   background-color: rgba(137, 180, 250, 0.4);
   border: 2px solid #89b4fa;
