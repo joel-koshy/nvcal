@@ -8,6 +8,7 @@ interface VimDialogProps {
   title: string;
   onClose: () => void;
   anchorId?: string;
+  anchorPositionKey?: string;
   id?: string;
   paneName?: string;
   children: ComponentChildren;
@@ -15,7 +16,7 @@ interface VimDialogProps {
   onSubmit?: (e: SubmitEvent) => void;
 }
 
-export function VimDialog({ isOpen, title, onClose, anchorId, id, paneName = 'dialog', onReposition, onSubmit, children }: VimDialogProps) {
+export function VimDialog({ isOpen, title, onClose, anchorId, anchorPositionKey, id, paneName = 'dialog', onReposition, onSubmit, children }: VimDialogProps) {
   const dialogRef = useRef<HTMLElement>(null);
   const [pos, setPos] = useState<{ top: number, left: number, opacity: number, side: 'left' | 'right' }>({ top: 0, left: 0, opacity: 0, side: 'right' });
   const vimContext = useContext(VimContext);
@@ -63,7 +64,7 @@ export function VimDialog({ isOpen, title, onClose, anchorId, id, paneName = 'di
         vimContext.setActivePane('main')
       }
     }
-  }, [isOpen, anchorId, title]);
+  }, [isOpen, anchorId, anchorPositionKey, title]);
 
   const handleDialogKey = (e: KeyboardEvent) => {
     const active = document.activeElement;

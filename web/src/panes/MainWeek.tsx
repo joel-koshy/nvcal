@@ -267,9 +267,11 @@ export function MainWeek({ date, setDate, events, loading, mutations, calendars 
       <VimDialog
         isOpen={!!draft}
         anchorId="draft-event-block"
+        anchorPositionKey={draft ? `${draft.dayIndex}:${draft.hour}:${draft.duration}` : undefined}
         id="draft-dialog"
         title={draft?.eventId ? `Edit: ${draft.originalEvent?.title}` : `New: ${draft?.date.toLocaleString([], { weekday: 'short', hour: 'numeric' })}`}
         onClose={closeDialog}
+        onReposition={setDialogSide}
         onSubmit={handleSubmit}
       >
         <VimFormRow>
